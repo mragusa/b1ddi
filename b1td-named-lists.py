@@ -42,32 +42,114 @@ from click_option_group import optgroup
     help="iUse this method to insert items for multiple Named List objects. Note that duplicated items correspondig to named list are silently skipped and only new items are appended to the named list. Note that DNSM, TI, Fast Flux and DGA lists cannot be updated. Only named lists of Custom List type can be updated by this operation. If one or more of the list ids is invalid, or the list is of invalid type then the entire operation will be failed.  The Custom List Items represent the list of the FQDN or IPv4 addresses to define whitelists and blacklists for additional protection.",
 )
 @optgroup.group("B1TD NamedList Fields")
-@optgroup.option("-i", "--nlid", type=int, help="The identifier for a Named List object.")
+@optgroup.option(
+    "-n", "--name", type=str, help="The identifier for a Named List object."
+)
 @optgroup.option("-b", "--body", help="The Named List object.")
-
-def main(config, file, listnl, create, delete, patch, nlid, body):
+def main(config, file, listnl, create, delete, patch, name, body):
     # Consume b1ddi ini file for login
     b1tdc = bloxone.b1tdc(config)
     print(b1tdc.api_key)
     print(b1tdc.api_version)
 
     if listnl:
-        try:
-            response = b1tdc.get_custom_lists()
-        except Exception as e:
-            print(e)
-        get_named_list(response)
+        if name:
+            try:
+                response = b1tdc.get_custom_list(name)
+            except Exception as e:
+                print(e)
+            named_list(response)
+        else:
+            try:
+                response = b1tdc.get_custom_lists()
+            except Exception as e:
+                print(e)
+            get_named_list(response)
+
 
 def get_named_list(response):
     table = PrettyTable()
-    table.field_names = ["Confidence Level", "Creation Time", "Description", "ID", "Item Count", "Name", "Policies", "Tags", "Threat Level", "Type", "Last Updated"]
+    table.field_names = [
+        "Confidence Level",
+        "Creation Time",
+        "Description",
+        "ID",
+        "Item Count",
+        "Name",
+        "Policies",
+        "Tags",
+        "Threat Level",
+        "Type",
+        "Last Updated",
+    ]
     if response.status_code == 200:
         b1tdc_list = response.json()
         for nl in b1tdc_list["results"]:
-            table.add_row([*[str(nl[key]) for key in ["confidence_level", "created_time", "description", "id", "item_count", "name", "policies", "tags", "threat_level", "type", "updated_time"]]])
+            table.add_row(
+                [
+                    *[
+                        str(nl[key])
+                        for key in [
+                            "confidence_level",
+                            "created_time",
+                            "description",
+                            "id",
+                            "item_count",
+                            "name",
+                            "policies",
+                            "tags",
+                            "threat_level",
+                            "type",
+                            "updated_time",
+                        ]
+                    ]
+                ]
+            )
     else:
         print(response.status_code, response.text)
     print(table)
+
+
+def named_list(response):
+    table = PrettyTable()
+    table.field_names = [
+        "Confidence Level",
+        "Creation Time",
+        "Description",
+        "ID",
+        "Item Count",
+        "Items",
+        "Items Description",
+        "Name",
+        "Policies",
+        "Tags",
+        "Threat Level",
+        "Type",
+        "Last Updated",
+    ]
+    if response.status_code == 200:
+        b1tdc_named_list = response.json()
+        for nl in b1tdc_named_list["results"]["items_described"]:
+            table.add_row(
+                [
+                    b1tdc_named_list["results"]["confidence_level"],
+                    b1tdc_named_list["results"]["created_time"],
+                    b1tdc_named_list["results"]["description"],
+                    b1tdc_named_list["results"]["id"],
+                    b1tdc_named_list["results"]["item_count"],
+                    nl["item"],
+                    nl["description"],
+                    b1tdc_named_list["results"]["name"],
+                    b1tdc_named_list["results"]["policies"],
+                    b1tdc_named_list["results"]["tags"],
+                    b1tdc_named_list["results"]["threat_level"],
+                    b1tdc_named_list["results"]["type"],
+                    b1tdc_named_list["results"]["updated_time"],
+                ]
+            )
+        print(table)
+    else:
+        print(response.status_code, response.text)
 
 
 if __name__ == "__main__":
