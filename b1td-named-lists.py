@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+import csv
+import bloxone
+from prettytable import PrettyTable
+import click
+from click_option_group import optgroup
+
+
+@click.command()
+@optgroup.group("Required Options")
+@optgroup.option(
+    "--config", type=str, default="b1config.ini", help="B1DDI Configuration INI file"
+)
+@optgroup.group("Batch Operations")
+@optgroup.option(
+    "-f", "--file", type=str, help="CSV file containing data for processing"
+)
+@optgroup.group("B1TD NamedList Actions", help="List, Create or Delete B1TD NamedLists")
+@optgroup.option(
+    "-l",
+    "--listnl",
+    is_flag=True,
+    help="Use this method to retrieve information on all Named List objects for the account. Note that list items are not returned for this operation",
+)
+@optgroup.option(
+    "-c",
+    "--create",
+    is_flag=True,
+    help="Use this method to create a Named List object.",
+)
+@optgroup.option(
+    "-d",
+    "--delete",
+    is_flag=True,
+    help="Use this method to delete Named List objects. Deletion of multiple lists is an all-or-nothing operation (if any of the specified lists can not be deleted then none of the specified lists will be deleted).",
+)
+@optgroup.option(
+    "-p",
+    "--patch",
+    is_flag=True,
+    help="iUse this method to insert items for multiple Named List objects. Note that duplicated items correspondig to named list are silently skipped and only new items are appended to the named list. Note that DNSM, TI, Fast Flux and DGA lists cannot be updated. Only named lists of Custom List type can be updated by this operation. If one or more of the list ids is invalid, or the list is of invalid type then the entire operation will be failed.  The Custom List Items represent the list of the FQDN or IPv4 addresses to define whitelists and blacklists for additional protection.",
+)
+@optgroup.group("B1TD NamedList Fields")
+@optgroup.option("-i", "--nlid", type=int, help="The identifier for a Named List object.")
+@optgroup.option("-b", "--body", help="The Named List object.")
+
+def main(config, file, listnl, create, delete, patch, nlid, body):
+    # Consume b1ddi ini file for login
+    b1tdc = bloxone.b1tdc(config)
+    print(b1tdc.api_key)
+    print(b1tdc.api_version)
+
+    if listnl:
+        try:
+            response = b1tdc.get_custom_lists()
+        except Exception as e:
+            print(e)
+        get_named_list(response)
+
+def get_named_list(response):
+    table = PrettyTable()
+    table.field_names = ["Confidence Level", "Creation Time", "Description", "ID", "Item Count", "Name", "Policies", "Tags", "Threat Level", "Type", "Last Updated"]
+    if response.status_code == 200:
+        b1tdc_list = response.json()
+        for nl in b1tdc_list["results"]:
+            table.add_row([*[str(nl[key]) for key in ["confidence_level", "created_time", "description", "id", "item_count", "name", "policies", "tags", "threat_level", "type", "updated_time"]]])
+    else:
+        print(response.status_code, response.text)
+    print(table)
+
+
+if __name__ == "__main__":
+    main()
