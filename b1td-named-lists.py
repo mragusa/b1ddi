@@ -45,12 +45,24 @@ from click_option_group import optgroup
 @optgroup.option(
     "-n", "--name", type=str, help="The identifier for a Named List object."
 )
-@optgroup.option("-b", "--body", help="The Named List object.")
-def main(config, file, listnl, create, delete, patch, name, body):
+@optgroup.option(
+    "-i", "--item", type=str, help="Add the item in the custom list using this field."
+)
+@optgroup.option(
+    "--comment",
+    help="Add the description/comments to each item in the custom list using this field.",
+)
+@optgroup.option(
+    "--confidence",
+    default="HIGH",
+    type=click.Choice(["LOW", "MEDIUM", "HIGH"]),
+    help="Confidence level of item",
+)
+def main(config, file, listnl, create, delete, patch, name, comment, item, confidence):
     # Consume b1ddi ini file for login
     b1tdc = bloxone.b1tdc(config)
-    print(b1tdc.api_key)
-    print(b1tdc.api_version)
+    print("API Key: {}".format(b1tdc.api_key))
+    print("API Version: {}".format(b1tdc.api_version))
 
     if listnl:
         if name:
@@ -65,6 +77,39 @@ def main(config, file, listnl, create, delete, patch, name, body):
             except Exception as e:
                 print(e)
             get_named_list(response)
+    if create:
+        try:
+            response = b1tdc.create_custom_list(
+                name,
+                confidence,
+                items_described=[{"description": comment, "item": item}],
+            )
+        except Exception as e:
+            print(e)
+        named_list(response)
+    if delete:
+        print("Fix Delete in library")
+        # if item and comment:
+        #    response = b1tdc.delete_items_from_custom_list(name, items_described=[{"description": comment, "item": item}])
+        #    print(response.status_code, response.json())
+        # elif name:
+        #    response = b1tdc.delete_custom_lists(name)
+        # else:
+        #    print("Invalid Flags Specified")
+
+    if patch:
+        try:
+            response = b1tdc.add_items_to_custom_list(
+                name, items_described=[{"description": comment, "item": item}]
+            )
+        except Exception as e:
+            print(e)
+        if response.status_code == 201:
+            print("{} update successful".format(name))
+            response = b1tdc.get_custom_list(name)
+            named_list(response)
+        else:
+            print(response.status_code, response.text)
 
 
 def get_named_list(response):
@@ -127,7 +172,7 @@ def named_list(response):
         "Type",
         "Last Updated",
     ]
-    if response.status_code == 200:
+    if response.status_code == 200 or response.status_code == 201:
         b1tdc_named_list = response.json()
         for nl in b1tdc_named_list["results"]["items_described"]:
             table.add_row(
