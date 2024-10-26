@@ -20,6 +20,7 @@ pip3 install requirements.txt
 ```
 
 ## Scripts
-| Name | Description
+| Name | Description |
+| ---- | ---- |
 | b1td-named-list.py | Add, Update, Delete B1TDC Named Lists |
 
