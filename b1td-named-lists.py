@@ -88,14 +88,27 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
             print(e)
         named_list(response)
     if delete:
-        print("Fix Delete in library")
-        # if item and comment:
-        #    response = b1tdc.delete_items_from_custom_list(name, items_described=[{"description": comment, "item": item}])
-        #    print(response.status_code, response.json())
-        # elif name:
-        #    response = b1tdc.delete_custom_lists(name)
-        # else:
-        #    print("Invalid Flags Specified")
+        if item and comment:
+            try:
+                response = b1tdc.delete_items_from_custom_list(
+                    name, items_described=[{"description": comment, "item": item}]
+                )
+            except Exception as e:
+                print(e)
+            if response.status_code == 204:
+                print("{} deleted from {}".format(item, name))
+                response = b1tdc.get_custom_list(name)
+                named_list(response)
+            else:
+                print(response.status_code, response.text)
+        elif name:
+            response = b1tdc.delete_custom_lists(names=[name])
+            if response.status_code == 204:
+                print("{} list deleted".format(name))
+            else:
+                print(response.status_code, response.text)
+        else:
+            print("Invalid Flags Specified")
 
     if patch:
         try:
