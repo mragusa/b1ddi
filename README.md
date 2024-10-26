@@ -18,6 +18,7 @@ pip3 install requirements.txt
 | b1td-named-list.py | Add, Update, Delete B1TDC Named Lists |
 
 ## Usage
+```
 b1td-named-lists.py --help
 Usage: b1td-named-lists.py [OPTIONS]
 
@@ -61,6 +62,7 @@ Options:
     --confidence [LOW|MEDIUM|HIGH]
                                   Confidence level of item
   --help                          Show this message and exit.
+```
 
 ### Example
 #### Create New List
