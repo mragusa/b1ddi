@@ -102,7 +102,10 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
             else:
                 print(response.status_code, response.text)
         elif name:
-            response = b1tdc.delete_custom_lists(names=[name])
+            try:
+                response = b1tdc.delete_custom_lists(names=[name])
+            except Exception as e:
+                print(e)
             if response.status_code == 204:
                 print("{} list deleted".format(name))
             else:
