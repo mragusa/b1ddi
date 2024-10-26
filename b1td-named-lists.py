@@ -16,7 +16,7 @@ from click_option_group import optgroup
 @optgroup.option(
     "-f", "--file", type=str, help="CSV file containing data for processing"
 )
-@optgroup.group("B1TD NamedList Actions", help="List, Create or Delete B1TD NamedLists")
+@optgroup.group("B1TD NamedList Actions")
 @optgroup.option(
     "-l",
     "--listnl",
@@ -39,7 +39,7 @@ from click_option_group import optgroup
     "-p",
     "--patch",
     is_flag=True,
-    help="iUse this method to insert items for multiple Named List objects. Note that duplicated items correspondig to named list are silently skipped and only new items are appended to the named list. Note that DNSM, TI, Fast Flux and DGA lists cannot be updated. Only named lists of Custom List type can be updated by this operation. If one or more of the list ids is invalid, or the list is of invalid type then the entire operation will be failed.  The Custom List Items represent the list of the FQDN or IPv4 addresses to define whitelists and blacklists for additional protection.",
+    help="Use this method to insert items for multiple Named List objects. Note that duplicated items correspondig to named list are silently skipped and only new items are appended to the named list. Note that DNSM, TI, Fast Flux and DGA lists cannot be updated. Only named lists of Custom List type can be updated by this operation. If one or more of the list ids is invalid, or the list is of invalid type then the entire operation will be failed.  The Custom List Items represent the list of the FQDN or IPv4 addresses to define whitelists and blacklists for additional protection.",
 )
 @optgroup.group("B1TD NamedList Fields")
 @optgroup.option(
@@ -87,6 +87,7 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
         except Exception as e:
             print(e)
         named_list(response)
+
     if delete:
         if item and comment:
             try:
@@ -126,6 +127,25 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
             named_list(response)
         else:
             print(response.status_code, response.text)
+
+    if file:
+        with open(file, newline='') as csvfile:
+            b1tdcfile = csv.reader(csvfile, delimiter=',')
+            for row in b1tdcfile:
+                if row[0] == "create":
+                    response = b1tdc.create_custom_list(row[1], confidence, items_described=[{"description": row[2], "item": row[3]}])
+                if row[0] == "update":
+                    response = b1tdc.add_items_to_custom_list(row[1], items_described=[{"description": row[2], "item": row[3]}])
+                if row[0] == "deleteitem":
+                    response = b1tdc.delete_items_from_custom_list(row[1], items_described=[{"description": row[2], "item": row[3]}])
+                if row[0] == "delete":
+                    response = b1tdc.delete_custom_lists(names=[row[1]])
+
+                if response.status_code == 200 or response .status_code == 201 or response.status_code == 204:
+                    print("Success")
+                else:
+                    print(response.status_code, response.text)
+
 
 
 def get_named_list(response):
