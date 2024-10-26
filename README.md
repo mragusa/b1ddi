@@ -88,16 +88,23 @@ b1td-named-lists.py -f file_test_nl.csv
 
 #### Sample Batch Processing File Format
 ##### Create New Lists
-- create,ChickenDinner,Google,www.google.com
+```
+create,ChickenDinner,Google,www.google.com
+```
 ##### Update Existing Lists
-- update,ChickenDinner,Yahoo,www.yahoo.com
-- update,ChickenDinner,Bing,www.bing.com
+```
+update,ChickenDinner,Yahoo,www.yahoo.com
+update,ChickenDinner,Bing,www.bing.com
+```
 ##### Delete Item from List
-- deleteitem,ChickenDinner,Yahoo,www.yahoo.com
-- deleteitem,ChickenDinner,Google,www.google.com
+```
+deleteitem,ChickenDinner,Yahoo,www.yahoo.com
+deleteitem,ChickenDinner,Google,www.google.com
+```
 ##### Delete List
-- delete,ChickenDinner
-
+```
+delete,ChickenDinner
+```
 
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
