@@ -129,23 +129,36 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
             print(response.status_code, response.text)
 
     if file:
-        with open(file, newline='') as csvfile:
-            b1tdcfile = csv.reader(csvfile, delimiter=',')
+        with open(file, newline="") as csvfile:
+            b1tdcfile = csv.reader(csvfile, delimiter=",")
             for row in b1tdcfile:
                 if row[0] == "create":
-                    response = b1tdc.create_custom_list(row[1], confidence, items_described=[{"description": row[2], "item": row[3]}])
+                    response = b1tdc.create_custom_list(
+                        row[1],
+                        confidence,
+                        items_described=[{"description": row[2], "item": row[3]}],
+                    )
                 if row[0] == "update":
-                    response = b1tdc.add_items_to_custom_list(row[1], items_described=[{"description": row[2], "item": row[3]}])
+                    response = b1tdc.add_items_to_custom_list(
+                        row[1],
+                        items_described=[{"description": row[2], "item": row[3]}],
+                    )
                 if row[0] == "deleteitem":
-                    response = b1tdc.delete_items_from_custom_list(row[1], items_described=[{"description": row[2], "item": row[3]}])
+                    response = b1tdc.delete_items_from_custom_list(
+                        row[1],
+                        items_described=[{"description": row[2], "item": row[3]}],
+                    )
                 if row[0] == "delete":
                     response = b1tdc.delete_custom_lists(names=[row[1]])
 
-                if response.status_code == 200 or response .status_code == 201 or response.status_code == 204:
+                if (
+                    response.status_code == 200
+                    or response.status_code == 201
+                    or response.status_code == 204
+                ):
                     print("Success")
                 else:
                     print(response.status_code, response.text)
-
 
 
 def get_named_list(response):
