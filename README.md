@@ -9,7 +9,7 @@ The following python packages will be required to run these tools:
 - [prettytable](https://github.com/prettytable/prettytable)
 
 ```
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## Scripts
