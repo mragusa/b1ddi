@@ -5,6 +5,7 @@ import bloxone
 from prettytable import PrettyTable
 import click
 from click_option_group import optgroup
+import smtplib, ssl
 
 
 @click.command()
@@ -58,14 +59,15 @@ from click_option_group import optgroup
     type=click.Choice(["LOW", "MEDIUM", "HIGH"]),
     help="Confidence level of item",
 )
-#@optgroup.group("Email Options")
-#@optgroup.option("--sender", multiple=True, help="SMTP Sender" )
-#@optgroup.option("-r", "--receipients", multiple=True, help="SMTP receipients")
-#@optgroup.option("--subject", default="Infoblox: Bloxone Threat Defense Cloud Update", help="SMTP Subject")
-#@optgroup.option("-s" "--server", help="SMTP Server")
+@optgroup.group("Email Options")
+@optgroup.option("--mail", type=bool, default=False, help="Mail output to designated people")
+@optgroup.option("--sender", multiple=True, help="SMTP Sender" )
+@optgroup.option("-r", "--receipients", multiple=True, help="SMTP Receipients")
+@optgroup.option("--subject", default="Infoblox: Bloxone Threat Defense Cloud Update", help="SMTP Subject")
+@optgroup.option("-s","--server", help="SMTP Server")
 
 
-def main(config, file, listnl, create, delete, patch, name, comment, item, confidence):
+def main(config, file, listnl, create, delete, patch, name, comment, item, confidence, mail, sender, receipients, subject, server):
     # Consume b1ddi ini file for login
     b1tdc = bloxone.b1tdc(config)
     # Uncomment if needed
@@ -137,6 +139,8 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
             print(response.status_code, response.text)
 
     if file:
+        if mail:
+            automated_report = []
         with open(file, newline="") as csvfile:
             b1tdcfile = csv.reader(csvfile, delimiter=",")
             for row in b1tdcfile:
@@ -172,8 +176,14 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
                                 row[1], row[0], row[3], row[2]
                             )
                         )
+                        if mail:
+                            automated_report.append("{row[1]} {row[0]} Successful : {row[3]} {row[2]}")
                 else:
                     print(response.status_code, response.text)
+                    if mail:
+                        automated_report.append("{response.status_code} {response.text}")
+                if mail:
+                    send_mail_report(server, sender, receipients, subject, automated_report)
 
 
 def get_named_list(response):
@@ -259,6 +269,25 @@ def named_list(response):
         print(table)
     else:
         print(response.status_code, response.text)
+
+def send_mail_report(server, sender, receipients, subject, automated_report):
+    smtp_server = server
+    sender_email = sender
+    receiver_email = (','.join(receipients))
+    message = "Subject: {} \nNamed List Updates \n{}".format(subject, automated_report)
+
+    ssl_context = ssl.create_default_context()
+    with smtplib.SMTP(smtp_server, port) as server:
+        server.ehlo()  # Can be omitted
+        if server.has_extn("starttls"):
+            server.starttls(context=ssl_context)
+            server.login(sender_email, password)
+        else:
+            server.login(sender_email, password)
+        try:
+            server.sendmail(sender_email, receiver_email, message)
+        except Exception as e:
+            print(e)
 
 
 if __name__ == "__main__":
