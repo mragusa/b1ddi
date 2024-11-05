@@ -58,6 +58,13 @@ from click_option_group import optgroup
     type=click.Choice(["LOW", "MEDIUM", "HIGH"]),
     help="Confidence level of item",
 )
+#@optgroup.group("Email Options")
+#@optgroup.option("--sender", multiple=True, help="SMTP Sender" )
+#@optgroup.option("-r", "--receipients", multiple=True, help="SMTP receipients")
+#@optgroup.option("--subject", default="Infoblox: Bloxone Threat Defense Cloud Update", help="SMTP Subject")
+#@optgroup.option("-s" "--server", help="SMTP Server")
+
+
 def main(config, file, listnl, create, delete, patch, name, comment, item, confidence):
     # Consume b1ddi ini file for login
     b1tdc = bloxone.b1tdc(config)
