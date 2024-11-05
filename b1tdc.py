@@ -4,6 +4,12 @@ import bloxone
 import click
 from prettytable import PrettyTable
 
+# TODO 
+# Add Table for access_codes, app_approvals, application_filters, block_approvals, category_filters, content_categories
+# internal_domain_lists, named_lists, network_lists, security_policy_rules
+#
+# FIX
+# adjust table for security_policies to allow rule content to print properly
 
 @click.command()
 @click.option("-c", "--config", default="b1config.ini", help="Path to b1config file")
@@ -51,8 +57,8 @@ def main(config: str, get: str):
     b1tdc_response = b1tdc.get(b1tdc_objects[get])
     if b1tdc_response.status_code == 200:
         b1_res = b1tdc_response.json()
-        print(b1_res)
-        # format_response(get, b1_res["results"])
+        #print(b1_res["results"][0]["rules"])
+        format_response(get, b1_res["results"])
     else:
         print(b1tdc_response.status_code, b1tdc_response.text)
 
@@ -70,7 +76,7 @@ def format_response(get_object, response):
             "Created Time",
             "Default Action",
             "Default Redirect Name",
-            "Description",
+            #"Description",
             "DFP Services",
             "DFPS",
             "DOH Enabled",
@@ -85,10 +91,7 @@ def format_response(get_object, response):
             "OnPrem Resolve",
             "Precedence",
             "Roaming Device Groups",
-            "Rules",
-            "Data",
-            "Description",
-            "Type",
+            #"Rules",
         ]
         for x in response:
             table.add_row(
@@ -98,7 +101,7 @@ def format_response(get_object, response):
                     x["created_time"],
                     x["default_action"],
                     x["default_redirect_name"],
-                    x["description"],
+                    #x["description"],
                     x["dfp_services"],
                     x["dfps"],
                     x["doh_enabled"],
@@ -113,32 +116,29 @@ def format_response(get_object, response):
                     x["onprem_resolve"],
                     x["precedence"],
                     x["roaming_device_groups"],
-                    x["rules"],
-                    x["data"],
-                    x["description"],
-                    x["type"],
+                    #x["rules"],
                 ]
             )
     if get_object == "threat_feeds":
         table.field_names = [
             "Confidence Level",
-            "Description",
-            "Key",
-            "Legacy",
-            "Name",
-            "Source",
             "Threat Level",
+            "Name",
+            #"Description",
+            #"Key",
+            "Legacy",
+            "Source",
         ]
         for x in response:
             table.add_row(
                 [
                     x["confidence_level"],
-                    x["description"],
-                    x["key"],
-                    x["legacy"],
-                    x["name"],
-                    x["source"],
                     x["threat_level"],
+                    x["name"],
+                    #x["description"],
+                    #x["key"],
+                    x["legacy"],
+                    x["source"],
                 ]
             )
     print(table)
