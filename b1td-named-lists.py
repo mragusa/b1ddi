@@ -61,8 +61,9 @@ from click_option_group import optgroup
 def main(config, file, listnl, create, delete, patch, name, comment, item, confidence):
     # Consume b1ddi ini file for login
     b1tdc = bloxone.b1tdc(config)
-    print("API Key: {}".format(b1tdc.api_key))
-    print("API Version: {}".format(b1tdc.api_version))
+    # Uncomment if needed
+    # print("API Key: {}".format(b1tdc.api_key))
+    # print("API Version: {}".format(b1tdc.api_version))
 
     if listnl:
         if name:
@@ -156,7 +157,14 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
                     or response.status_code == 201
                     or response.status_code == 204
                 ):
-                    print("Success")
+                    if len(row) == 2:
+                        print("{} {} Successful".format(row[0], row[1]))
+                    else:
+                        print(
+                            "{} {} Successful : {} {} ".format(
+                                row[1], row[0], row[3], row[2]
+                            )
+                        )
                 else:
                     print(response.status_code, response.text)
 
