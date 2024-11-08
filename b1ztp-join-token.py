@@ -13,12 +13,6 @@ import click
 @click.option("-c", "--create", is_flag=True, default=False, help="Create join token")
 @click.option("-d", "--delete", is_flag=True, default=False, help="Delete join token")
 @click.option("-i", "--id", type=str, help="Join Token ID")
-@click.option(
-    "-t",
-    "--tokens",
-    multiple=True,
-    help="Provide multiple IDs to delete a list of join tokens",
-)
 def main(list, create, delete, id, tokens):
     b1ztp = bloxone.b1ztp("b1config.ini")
     if list:
@@ -46,42 +40,68 @@ def main(list, create, delete, id, tokens):
     if delete:
         if id:
             response = b1ztp.delete("/jointoken", id=id)
+            if response.status_code == 204:
+                print("{} deleted successfully".format(id))
+            else:
+                print(response.status_code, response.text)
         else:
-            response = b1ztp.delete("/jointokens")
-        if response.status_code == 204:
-            print("{} deleted successfully".format(id))
-        else:
-            print(response.status_code, response.text)
+            print("No ID Provided")
 
 
 def list_token(response):
     table = PrettyTable()
     joinToken = response
-    # print(response)
-    table.field_names = ["ID", "Last Used", "Name", "Status", "Token ID", "Use Counter"]
-    for x in joinToken["results"]:
-        if "last_used_at" in x:
-            table.add_row(
-                [
-                    x["id"],
-                    x["last_used_at"],
-                    x["name"],
-                    x["status"],
-                    x["token_id"],
-                    x["use_counter"],
-                ]
-            )
-        else:
-            table.add_row(
-                [
-                    x["id"],
-                    "Unused",
-                    x["name"],
-                    x["status"],
-                    x["token_id"],
-                    x["use_counter"],
-                ]
-            )
+    if "results" in joinToken:
+        table.field_names = [
+            "ID",
+            "Last Used",
+            "Name",
+            "Status",
+            "Token ID",
+            "Use Counter",
+        ]
+        for x in joinToken["results"]:
+            if "last_used_at" in x:
+                table.add_row(
+                    [
+                        x["id"],
+                        x["last_used_at"],
+                        x["name"],
+                        x["status"],
+                        x["token_id"],
+                        x["use_counter"],
+                    ]
+                )
+            else:
+                table.add_row(
+                    [
+                        x["id"],
+                        "Unused",
+                        x["name"],
+                        x["status"],
+                        x["token_id"],
+                        x["use_counter"],
+                    ]
+                )
+    else:
+        table.field_names = [
+            "ID",
+            "Description",
+            "Name",
+            "Status",
+            "Token ID",
+            "Use Counter",
+        ]
+        table.add_row(
+            [
+                joinToken["result"]["id"],
+                joinToken["result"]["description"],
+                joinToken["result"]["name"],
+                joinToken["result"]["status"],
+                joinToken["result"]["token_id"],
+                joinToken["result"]["use_counter"],
+            ]
+        )
     print(table)
 
 
