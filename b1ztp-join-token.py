@@ -13,7 +13,7 @@ import click
 @click.option("-c", "--create", is_flag=True, default=False, help="Create join token")
 @click.option("-d", "--delete", is_flag=True, default=False, help="Delete join token")
 @click.option("-i", "--id", type=str, help="Join Token ID")
-def main(list, create, delete, id, tokens):
+def main(list, create, delete, id):
     b1ztp = bloxone.b1ztp("b1config.ini")
     if list:
         if id:
