@@ -12,8 +12,15 @@ import click
 )
 @click.option("-c", "--create", is_flag=True, default=False, help="Create join token")
 @click.option("-d", "--delete", is_flag=True, default=False, help="Delete join token")
+@click.option(
+    "-r",
+    "--registration",
+    is_flag=True,
+    default=False,
+    help="Registration verification",
+)
 @click.option("-i", "--id", type=str, help="Join Token ID")
-def main(list, create, delete, id):
+def main(list, create, delete, registration, id):
     b1ztp = bloxone.b1ztp("b1config.ini")
     if list:
         if id:
@@ -46,6 +53,18 @@ def main(list, create, delete, id):
                 print(response.status_code, response.text)
         else:
             print("No ID Provided")
+    if registration:
+        federation = input("Federation: True or False")
+        if id:
+            rToken = {"federation": federation, "join_token": id}
+        else:
+            joinToken = input("Join Token: ")
+            rToken = {"federation": federation, "join_token": id}
+        response = b1ztp.create("/registration/verify", body=json.dumps(rtoken))
+        if response.status_code == 201:
+            print("Verification Complete")
+        else:
+            print(response.status_code, response.text)
 
 
 def list_token(response):
