@@ -5,8 +5,7 @@ import click
 from prettytable import PrettyTable
 
 # TODO 
-# Add Table for access_codes, app_approvals, application_filters, block_approvals, category_filters, content_categories
-# internal_domain_lists, named_lists, network_lists, security_policy_rules
+# Add Table for access_codes, app_approvals, block_approvals, category_filters, network_lists,
 #
 # FIX
 # adjust table for security_policies to allow rule content to print properly
@@ -25,7 +24,7 @@ from prettytable import PrettyTable
             "category_filters",
             "content_categories",
             "internal_domain_lists",
-            "named_lists",
+            #"named_lists",
             "network_lists",
             "pop_regions",
             "security_policies",
@@ -45,7 +44,7 @@ def main(config: str, get: str):
         "category_filters": "/category_filters",
         "content_categories": "/content_categories",
         "internal_domain_lists": "/internal_domain_lists",
-        "named_lists": "/named_lists",
+        #"named_lists": "/named_lists",
         "network_lists": "/network_lists",
         "pop_regions": "/pop_regions",
         "security_policies": "/security_policies",
@@ -56,8 +55,8 @@ def main(config: str, get: str):
     b1tdc = bloxone.b1tdc(config)
     b1tdc_response = b1tdc.get(b1tdc_objects[get])
     if b1tdc_response.status_code == 200:
-        b1_res = b1tdc_response.json()
-        #print(b1_res["results"][0]["rules"])
+        #b1_res = b1tdc_response.json()
+        print(b1_res["results"])
         format_response(get, b1_res["results"])
     else:
         print(b1tdc_response.status_code, b1tdc_response.text)
@@ -65,6 +64,18 @@ def main(config: str, get: str):
 
 def format_response(get_object, response):
     table = PrettyTable()
+    if get_object == "application_filters":
+        table.field_names = ["Created Time", "ID", "Name", "Description", "Criteria", "Policies", "ReadOnly", "Tags", "Updated Time"]
+        for x in response:
+            table.add_row([x["created_time"], x["id"], x["name"], x["description"], x["criteria"], x["policies"], x["readonly"], x["tags"], x["updated_time"]])
+    if get_object == "content_categories":
+        table.field_names = ["Category Code", "Name", "Functional Group"]
+        for x in response:
+            table.add_row([x["category_code"], x["category_name"], x["functional_group"]])
+    if get_object == "internal_domain_lists":
+        table.field_names= ["Created", "ID", "Name", "Description", "Default", "Tags", "Updated", "Internal Domains"]
+        for x in response:
+            table.add_row([x["created_time"], x["id"], x["name"],x["description"], x["is_default"], x["tags"], x["updated_time"], x["internal_domains"]])
     if get_object == "pop_regions":
         table.field_names = ["Addresses", "ID", "Location", "Region"]
         for x in response:
@@ -119,6 +130,10 @@ def format_response(get_object, response):
                     #x["rules"],
                 ]
             )
+    if get_object == "security_policy_rules":
+        table.field_names=["Action", "Data", "List ID", "Policy ID", "Policy Name","Redirect Name","Rule Tags","Type"]
+        for x in response:
+            table.add_row([x["action"], x["data"], x["list_id"], x["policy_id"], x["policy_name"], x["redirect_name"], x["rule_tags"], x["type"]])
     if get_object == "threat_feeds":
         table.field_names = [
             "Confidence Level",
