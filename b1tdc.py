@@ -16,6 +16,7 @@ from prettytable import PrettyTable
 @click.option(
     "-g",
     "--get",
+    help="Bloxone Threat Defense Cloud Swagger Objects. Retreive the current configuration of the selected object",
     type=click.Choice(
         [
             "access_codes",
