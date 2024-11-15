@@ -7,7 +7,7 @@ The following python packages will be required to run these tools:
 - [click](https://click.palletsprojects.com/en/stable/)
 - [click-option-group](https://click-option-group.readthedocs.io/en/latest/)
 - [prettytable](https://github.com/prettytable/prettytable)
-
+- [rich](https://github.com/Textualize/rich)
 ```
 pip3 install -r requirements.txt
 ```
@@ -16,6 +16,10 @@ pip3 install -r requirements.txt
 | Name | Description |
 | ---- | ---- |
 | b1td-named-list.py | Add, Update, Delete B1TDC Named Lists |
+| b1tdc.py | Get B1TDC Objects and display them on screen |
+| b1ddi-join-token.py | Get, Add, Delete B1DDI Join Tokens |
+| b1ddi-nsg.py | Get, Add, Delete B1DDI Auth NSG |
+| b1ddi-ipspace.py | Get, Add, Delete B1DDI IP Space |
 
 ## Usage
 ```
