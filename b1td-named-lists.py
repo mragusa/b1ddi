@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# TODO
+# Change PrettyTable for RichTables
 import csv
 import bloxone
 from prettytable import PrettyTable
