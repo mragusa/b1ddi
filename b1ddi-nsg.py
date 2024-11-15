@@ -3,8 +3,11 @@
 
 import bloxone
 import json
-from prettytable import PrettyTable
+from rich.console import Console
+from rich.table import Table
 import click
+from click_option_group import optgroup
+
 
 # TODO
 # Add functionality for external primaries, external secondaries,  additional options for niosx hosts
@@ -12,24 +15,30 @@ import click
 
 
 @click.command()
-@click.option(
+@optgroup.group("BloxOne Configuration File")
+@optgroup.option(
     "-c", "--config", default="b1config.ini", help="BloxOne Configuration File"
 )
-@click.option(
+@optgroup.group("BloxOne Actions")
+@optgroup.option(
     "-g",
     "--get",
     is_flag=True,
     default=False,
     help="Retreive BloxOne Hosts and AuthNSG",
 )
-@click.option("-n", "--new", is_flag=True, default=False, help="Create BloxOne AuthNSG")
-@click.option(
+@optgroup.option(
+    "-n", "--new", is_flag=True, default=False, help="Create BloxOne AuthNSG"
+)
+@optgroup.option(
     "-d", "--delete", is_flag=True, default=False, help="Delete BloxOne AuthNSG"
 )
-@click.option("--host", multiple=True, default=[], help="BloxOne Host")
-@click.option("--ansgname", help="NSG Name")
-@click.option("--comment", help="NSG Comment")
-@click.option("--ansgid", help="Auth NSG ID")
+@optgroup.group("Auth NSG ID")
+@optgroup.option("--ansgid", help="Auth NSG ID")
+@optgroup.group("BloxOne New AuthNSG Options")
+@optgroup.option("--host", multiple=True, default=[], help="BloxOne Host")
+@optgroup.option("--ansgname", help="NSG Name")
+@optgroup.option("--comment", help="NSG Comment")
 def main(config, get, new, delete, host, ansgname, comment, ansgid):
     b1ddi = bloxone.b1ddi(config)
     if get:
@@ -45,11 +54,10 @@ def main(config, get, new, delete, host, ansgname, comment, ansgid):
 
 
 def get_dns_hosts(b1ddi):
-    table = PrettyTable()
     response = b1ddi.get("/dns/host")
     if response.status_code == 200:
         # print(response.json())
-        table.field_names = [
+        table = Table(
             "Address",
             "Name",
             "ID",
@@ -57,32 +65,31 @@ def get_dns_hosts(b1ddi):
             "Version",
             "Serial Number",
             "Type",
-        ]
+            title="BloxOne DNS Hosts",
+        )
         dnsHosts = response.json()
         for x in dnsHosts["results"]:
             # print(x["address"])
             table.add_row(
-                [
-                    x["address"],
-                    x["name"],
-                    x["id"],
-                    x["comment"],
-                    x["current_version"],
-                    x["tags"]["host/serial_number"],
-                    x["type"],
-                ]
+                x["address"],
+                x["name"],
+                x["id"],
+                x["comment"],
+                x["current_version"],
+                x["tags"]["host/serial_number"],
+                x["type"],
             )
-        print(table)
+        console = Console()
+        console.print(table)
     else:
         print(response.status_code, response.text)
 
 
 def get_auth_nsg(b1ddi):
-    table = PrettyTable()
     response = b1ddi.get("/dns/auth_nsg")
     if response.status_code == 200:
         authNsg = response.json()
-        table.field_names = [
+        table = Table(
             "Name",
             "Comment",
             "ID",
@@ -90,20 +97,29 @@ def get_auth_nsg(b1ddi):
             "NIOS-X Host",
             "NSG",
             "Tags",
-        ]
+            title="BloxOne Name Server Groups",
+        )
         for x in authNsg["results"]:
+            if not x["external_primaries"]:
+                x["external_primaries"] = "None"
+            if not x["nsgs"]:
+                x["nsgs"] = "None"
+            if not x["tags"]:
+                x["tags"] = "None"
+            inS = []
+            for s in x["internal_secondaries"]:
+                inS.append(s["host"])
             table.add_row(
-                [
-                    x["name"],
-                    x["comment"],
-                    x["id"],
-                    x["external_primaries"],
-                    x["internal_secondaries"],
-                    x["nsgs"],
-                    x["tags"],
-                ]
+                x["name"],
+                x["comment"],
+                x["id"],
+                x["external_primaries"],
+                "\n".join(inS),
+                x["nsgs"],
+                x["tags"],
             )
-        print(table)
+        console = Console()
+        console.print(table)
     else:
         print(response.status_code, response.text)
 
@@ -119,29 +135,7 @@ def create_auth_nsg(b1ddi, host, ansgname, comment):
     }
     response = b1ddi.create("/dns/auth_nsg", body=json.dumps(ansgBody))
     if response.status_code == 200:
-        nsg_response = response.json()
-        table = PrettyTable()
-        table.field_names = [
-            "Name",
-            "Comment",
-            "ID",
-            "External Primaries",
-            "NIOS-X Host",
-            "NSG",
-            "Tags",
-        ]
-        table.add_row(
-            [
-                nsg_response["result"]["name"],
-                nsg_response["result"]["comment"],
-                nsg_response["result"]["id"],
-                nsg_response["result"]["external_primaries"],
-                nsg_response["result"]["internal_secondaries"],
-                nsg_response["result"]["nsgs"],
-                nsg_response["result"]["tags"],
-            ]
-        )
-        print(table)
+        get_auth_nsg(b1ddi)
     else:
         print(response.status_code, response.text)
 
@@ -150,6 +144,7 @@ def delete_auth_nsg(b1ddi, ansgid):
     response = b1ddi.delete("/dns/auth_nsg", id=ansgid)
     if response.status_code == 200:
         print("{} has been deleted successfully".format(ansgid))
+        get_auth_nsg(b1ddi)
     else:
         print(response.status_code, response.text)
 
