@@ -4,22 +4,32 @@ import bloxone
 import json
 from prettytable import PrettyTable
 import click
+from click_option_group import optgroup
+
+# TODO
+# Change PrettyTable for RichTable
 
 
 @click.command()
-@click.option(
+@optgroup.group("BloxOne Zero Touch Provisioning Join Token Actions")
+@optgroup.option(
     "-l", "--list", is_flag=True, default=False, help="List current join tokens"
 )
-@click.option("-c", "--create", is_flag=True, default=False, help="Create join token")
-@click.option("-d", "--delete", is_flag=True, default=False, help="Delete join token")
-@click.option(
+@optgroup.option(
+    "-c", "--create", is_flag=True, default=False, help="Create join token"
+)
+@optgroup.option(
+    "-d", "--delete", is_flag=True, default=False, help="Delete join token"
+)
+@optgroup.option(
     "-r",
     "--registration",
     is_flag=True,
     default=False,
     help="Registration verification",
 )
-@click.option("-i", "--id", type=str, help="Join Token ID")
+@optgroup.group("B1ZTP ID")
+@optgroup.option("-i", "--id", type=str, help="Join Token ID")
 def main(list, create, delete, registration, id):
     b1ztp = bloxone.b1ztp("b1config.ini")
     if list:
