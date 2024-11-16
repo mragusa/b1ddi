@@ -20,7 +20,7 @@ from rich.table import Table
 @optgroup.option("-g", "--get", is_flag=True, help="Retreive IP Spaces")
 @optgroup.option("-n", "--new", is_flag=True, help="Create new IP Space")
 @optgroup.option("-d", "--delete", is_flag=True, help="Create new IP Space")
-@optgroup.option("IP Space ID")
+@optgroup.group("IP Space ID")
 @optgroup.option("-i", "--id", help="IP Space ID")
 @optgroup.group("New IP Space Options")
 @optgroup.option("--name", help="IP Space Name")
