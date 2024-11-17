@@ -15,12 +15,14 @@ from rich.table import Table
 @optgroup.option("-g", "--get", is_flag=True, help="Get current DHCP Configurations")
 @optgroup.option("-n", "--new", is_flag=True, help="Create new DHCP Configurations")
 @optgroup.option("-d", "--delete", is_flag=True, help="Delete new DHCP Configurations")
+@optgroup.option("-u", "--update", is_flag=True, help="Delete new DHCP Configurations")
 @optgroup.group("New DHCP Profile Options")
 @optgroup.option("--name", help="DHCP Profile Name")
 @optgroup.option("--comment", help="Profile Description")
-@optgroup.group("Delete DHCP Profile Options")
-@optgroup.option("--id", help="Profile ID")
-def main(config, get, new, delete, name, comment, id):
+@optgroup.group("DHCP Profile Options")
+@optgroup.option("--id", help="Profile or Host ID")
+@optgroup.option("--serverid", help="DHCP Server ID")
+def main(config, get, new, delete, update, name, comment, id, serverid):
     b1ddi = bloxone.b1ddi(config)
     if get:
         get_dhcp_global(b1ddi)
@@ -28,6 +30,8 @@ def main(config, get, new, delete, name, comment, id):
         create_dhcp_config(b1ddi, name, comment)
     if delete:
         del_dhcp_config(b1ddi, id)
+    if update:
+        assign_dhcp_config(b1ddi, id, serverid)
 
 
 def get_dhcp_global(b1ddi):
@@ -41,9 +45,21 @@ def get_dhcp_global(b1ddi):
             table.add_row(x["created_at"], x["name"], x["comment"], x["id"])
         console = Console()
         console.print(table)
+        get_dhcp_hosts(b1ddi)
     else:
         print(response.status_code, response.text)
 
+def get_dhcp_hosts(b1ddi):
+    response = b1ddi.get("/dhcp/host")
+    if response.status_code == 200:
+        b1Hosts = response.json()
+        hostTable = Table("Name", "Address", "Comment", "ID", "DHCP Profile", "DHCP Config ID", title="BloxOne DHCP Hosts")
+        for x in b1Hosts["results"]:
+            hostTable.add_row(x["name"], x["address"], x["comment"], x["id"], x["associated_server"]["name"], x["server"])
+        console = Console()
+        console.print(hostTable)
+    else:
+        print(response.status_code, response.text)
 
 def create_dhcp_config(b1ddi, name, comment):
     dhBody = {"name": name, "comment": comment}
@@ -53,7 +69,6 @@ def create_dhcp_config(b1ddi, name, comment):
     else:
         print(response.status_code, response.text)
 
-
 def del_dhcp_config(b1ddi, id):
     response = b1ddi.delete("/dhcp/server", id=id)
     if response.status_code == 200:
@@ -61,6 +76,13 @@ def del_dhcp_config(b1ddi, id):
     else:
         print(response.status_code, response.text)
 
+def assign_dhcp_config(b1ddi, id, serverid):
+    updateDhcpConfig = {"server": serverid}
+    response = b1ddi.update("/dhcp/host", id=id, body=json.dumps(updateDhcpConfig))
+    if response.status_code == 200:
+        get_dhcp_global(b1ddi)
+    else:
+        print(response.status_code, response.text)
 
 if __name__ == "__main__":
     main()
