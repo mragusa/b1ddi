@@ -8,6 +8,7 @@ from click_option_group import optgroup
 
 # TODO
 # Change PrettyTable for RichTable
+# Add code to save join token to file
 
 
 @click.command()
