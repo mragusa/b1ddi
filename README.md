@@ -19,6 +19,7 @@ pip3 install -r requirements.txt
 | b1tdc.py | Get B1TDC Objects and display them on screen |
 
 | B1DDI Tools | Description |
+| ---- | ---- |
 | b1ztp-join-token.py | Get, Add, Delete B1DDI Join Tokens |
 | b1infra-host-services.py | Get, Add, Update Host / Service Assignment and Start / Stop Services |
 | b1ddi-dns-nsg.py | Get, Add, Delete B1DDI Auth NSG |
