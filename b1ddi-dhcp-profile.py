@@ -65,7 +65,7 @@ def get_dhcp_hosts(b1ddi):
         )
         for x in b1Hosts["results"]:
             if x["associated_server"] == None:
-                x["associated_server"] = {"name":"None"}
+                x["associated_server"] = {"name": "None"}
             hostTable.add_row(
                 x["name"],
                 x["address"],
