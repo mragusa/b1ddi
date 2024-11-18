@@ -37,19 +37,20 @@ pip3 install -r requirements.txt
     - b1ztp-join-token.py example
 2. Update Joined Host Display Names
     - b1infra-host-services.py
-3. Create DHCP Global Config
-    - b1ddi-dhcp-profile.py
-4. Crete DNS Global Config
-    - b1ddi-dns-profile.py
-5. Crete DHCP High Availablity Groups
-    - b1ddi-dhcp-ha.py
-6. Create Name Server Groups
-    - b1ddi-dns-nsg.py
-7. Create IP Space
+3. Create IP Space
     - b1ddi-dhcp-ipspace.py
+4. Create DHCP Global Config
+    - b1ddi-dhcp-profile.py
+5. Crete DNS Global Config
+    - b1ddi-dns-profile.py
+6. Crete DHCP High Availablity Groups
+    - b1ddi-dhcp-ha.py
+7. Create Name Server Groups
+    - b1ddi-dns-nsg.py
 8. Create DNS View
     - b1ddi-dns-view.py
 9. Import DHCP Options
+    - b1ddi-dhcp-options.py	
 10. Import DHCP Option Filters
 
 ## Usage
