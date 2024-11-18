@@ -7,6 +7,10 @@ from click_option_group import optgroup
 from rich.console import Console
 from rich.table import Table
 
+# TODO
+# Add ability to delete hosts
+# Add ability to delete services
+
 
 @click.command()
 @optgroup.group("BloxOne Configuration file")
@@ -18,13 +22,13 @@ from rich.table import Table
     "-g", "--get", is_flag=True, help="Retreive BloxOne Hosts and Services"
 )
 @optgroup.group("BloxOne Hosts")
-@optgroup.option("--hosts", is_flag=True, help="Create / Update / Delete BloxOne Hosts")
+@optgroup.option("--hosts", is_flag=True, help="Create / Update BloxOne Hosts")
 @optgroup.option(
     "-u", "--update", is_flag=True, help="Update BloxOne Hosts and Services"
 )
 @optgroup.group("BloxOne Services")
 @optgroup.option(
-    "--services", is_flag=True, help="Create / Update / Delete BloxOne Services"
+    "--services", is_flag=True, help="Create / Update BloxOne Services"
 )
 @optgroup.option("-n", "--new", is_flag=True, help="Create BloxOne Service Resource")
 @optgroup.group("Host and Service Options")
@@ -126,7 +130,7 @@ def get_b1_services(b1infra):
             "Desired State",
             "Pool ID",
             "Host",
-            title="BloxOne Servces",
+            title="BloxOne Services",
         )
         for x in services_infra["results"]:
             if "description" not in x:
