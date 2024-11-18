@@ -42,6 +42,7 @@ from rich.table import Table
         [
             "dns",
             "dhcp",
+            "ntp"
         ],
         case_sensitive=True,
     ),
