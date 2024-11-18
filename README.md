@@ -18,8 +18,30 @@ pip3 install -r requirements.txt
 | b1td-named-list.py | Add, Update, Delete B1TDC Named Lists |
 | b1tdc.py | Get B1TDC Objects and display them on screen |
 | b1ztp-join-token.py | Get, Add, Delete B1DDI Join Tokens |
+| b1infra-host-services.py | Get, Add, Update Host / Service Assignment and Start / Stop Services |
 | b1ddi-nsg.py | Get, Add, Delete B1DDI Auth NSG |
 | b1ddi-ipspace.py | Get, Add, Delete B1DDI IP Space |
+
+
+## UDDI Process
+1. Create Join Tokens for BloxOne hardware or virtual machine
+    - b1ztp-join-token.py example
+2. Update Joined Host Display Names
+    - b1infra-host-services.py
+3. Create DHCP Global Config
+    - b1ddi-dhcp-profile.py
+4. Crete DNS Global Config
+    - b1ddi-dns-profile.py
+5. Crete DHCP High Availablity Groups
+    - b1ddi-dhcp-ha.py
+6. Create Name Server Groups
+    - b1ddi-dns-nsg.py
+7. Create IP Space
+    - b1ddi-dhcp-ipspace.py
+8. Create DNS View
+    - b1ddi-dns-view.py
+9. Import DHCP Options
+10. Import DHCP Option Filters
 
 ## Usage
 ```
