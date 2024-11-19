@@ -164,9 +164,9 @@ def process_dhcp_filter(b1ddi, filterRow):
 def create_dhcp_filter(b1ddi, dhcpOptionFilter):
     response = b1ddi.create("/dhcp/option_filter", body=json.dumps(dhcpOptionFilter))
     if response.status_code == 200:
-        print("DHCP Option Filter Added Successfully")
+        print("{} DHCP Option Filter Added Successfully".format(dhcpOptionFilter["name"]))
     else:
-        print(response.status_code, response.text)
+        print(dhcpOptionFilter["name"], response.status_code, response.text)
 
 
 def open_file(file, b1ddi):
