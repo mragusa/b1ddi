@@ -1,0 +1,35 @@
+[project]
+name = "bloxone-operational-tools"
+version = "0.0.1"
+description = "Infoblox BloxOne Operational Tools"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.8"
+authors = [{name = "Michael Ragusa", email="mragusa@infoblox.com"}]
+maintainers = [{name = "Michael Ragusa", email="mragusa@infoblox.com"}]
+dependencies = [
+  "bloxone",
+  "click",
+  "click-option-group",
+  "rich",
+  "prettytable"
+]
+
+[project.scripts]
+[project.urls]
+"homepage" = "https://github.com/mragusa/b1ddi"
+
+[tools.setuptools]
+packages = ["diagnostics"]
+python_requires = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pyright]
+venvPath = "."
+venv = "venv"
