@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "bloxone-operational-tools"
 version = "0.0.1"
@@ -14,8 +18,35 @@ dependencies = [
   "rich",
   "prettytable"
 ]
+keywords = ["infoblox", "b1ddi", "bloxone", "uddi", "dns", "dhcp"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
 
 [project.scripts]
+# DHCP DDI Tools
+b1-dhcp-ha = "b1ddi.bin.b1ddi-dhcp-ha:main"
+b1-dhcp-ips = "b1ddi.bin.b1ddi-dhcp-ipspace:main"
+b1-dhcp-opt = "b1ddi.bin.b1ddi-dhcp-options:main"
+b1-dhcp-optfil = "b1ddi.bin.b1ddi-dhcp-option-filters:main"
+b1-dhcp-pro = "b1ddi.bin.b1ddi-dhcp-profile:main"
+
+# DNS DDI Tools
+b1-dns-nsg = "b1ddi.bin.b1ddi-dns-nsg:main"
+b1-dns-pro = "b1ddi.bin.b1ddi-dns-profile:main"
+b1-dns-view = "b1ddi.bin.b1ddi-dns-view:main"
+
+# DDI Infrastructure Tools
+b1-infra = "b1ddi.bin.b1infra-host-services:main"
+b1-join = "b1ddi.bin.b1ztp-join-token:main"
+
+# Threat Defense Tools
+b1-td-nl = "b1ddi.bin.b1td-named-lists:main"
+
 [project.urls]
 "homepage" = "https://github.com/mragusa/b1ddi"
 
@@ -25,10 +56,6 @@ python_requires = ">=3.8"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
 
 [tool.pyright]
 venvPath = "."
