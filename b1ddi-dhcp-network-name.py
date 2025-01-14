@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO Clean up display output
 
 import bloxone
 import logging
@@ -6,7 +7,7 @@ import json
 import csv
 import click
 from click_option_group import optgroup
-
+# Uncomment to enable debug logging
 # logging.basicConfig(level=logging.DEBUG)
 
 
@@ -58,8 +59,10 @@ def update_network_name(b1ddi, id, name):
     b1ddi_subnet = b1ddi.get("/ipam/subnet", id=id)
     if b1ddi_subnet.status_code == 200:
         subnet = b1ddi_subnet.json()
+        # Determine if name field is already populated or not
         if subnet["result"]["name"] == "":
             print("Applying Name Field Update: ID: {} Name: {}".format(id, name))
+            # Use replace instead of update to get the correct http verb
             updated_network = b1ddi.replace(
                 "/ipam/subnet", id=id, body=json.dumps({"name": name})
             )
