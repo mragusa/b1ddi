@@ -39,25 +39,40 @@ def get_subnet(b1):
         print(b1_subnet.status_code, b1_subnet.text)
     else:
         subnets = b1_subnet.json()
-        subTable = Table(title="Current Subnet Assignment", row_styles=["dim", ""])
-        subTable.add_column("Address", justify="center", style="green")
+        subTable = Table(
+            title="Current Subnet and Range Service Assignment", row_styles=["dim", ""]
+        )
+        subTable.add_column("Subnet", justify="center", style="green")
         subTable.add_column("Service Instance", justify="center", style="bright_white")
+        subTable.add_column("Range ID", justify="center", style="green")
+        subTable.add_column(
+            "Range Service Instance", justify="center", style="bright_white"
+        )
         for net in subnets["results"]:
-            subTable.add_row(net["address"], net["dhcp_host"])
+            dhcp_range = get_range(b1, net["id"])
+            if dhcp_range is not None:
+                subTable.add_row(
+                    net["address"],
+                    net["dhcp_host"],
+                    dhcp_range["result"]["id"],
+                    dhcp_range["result"]["dhcp_host"],
+                )
+            else:
+                subTable.add_row(net["address"], net["dhcp_host"], "None", "None")
         console = Console()
         console.print(subTable)
 
 
-def get_range(b1):
-    # TODO
-    # Update this method to find ranges based on subnets and return for the subnet table
-    dhcp_range = b1.get("/ipam/range")
-    if dhcp_range.status_code != 200:
-        print(dhcp_range.status_code, dhcp_range.text)
+def get_range(b1, parent):
+    range_id = get_range_id(b1, parent)
+    if range_id:
+        dhcp_range = b1.get("/ipam/range", id=range_id)
+        if dhcp_range.status_code != 200:
+            print(dhcp_range.status_code, dhcp_range.text)
+        else:
+            return dhcp_range.json()
     else:
-        ranges = dhcp_range.json()
-        for x in ranges["results"]:
-            print(x["parent"])
+        return None
 
 
 def process_file(b1, file):
@@ -79,9 +94,11 @@ def process_file(b1, file):
                         net[0], sub_id, net[1], subnet_ha_groups[net[1]]
                     )
                 )
+                # updated_subnet(b1, sub_id, subnet_ha_groups[net[1]])
                 if ran_id:
                     print("Range: {}".format(ran_id))
-                # updated_subnet(b1, sub_id, subnet_ha_groups[net[1]])
+                    print("Updating DHCP Range")
+                    # update_range(b1, ran_id, subnet_ha_groups[net[1]])
     else:
         print("CSV Input File Missing")
 
@@ -118,7 +135,7 @@ def update_range(b1, range_id, ha_group_id):
     if updated_range.status_code != 200:
         print(updated_range.status_code, updated_range.text)
     else:
-        print("Subnet Updated: {} {}".format(subnet_id, ha_group_id))
+        print("Range Updated: {} {}".format(subnet_id, ha_group_id))
 
 
 if __name__ == "__main__":
