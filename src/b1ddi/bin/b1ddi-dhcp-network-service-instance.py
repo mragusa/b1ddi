@@ -3,6 +3,7 @@
 import bloxone
 import csv
 import click
+import json
 from rich.table import Table
 from rich.console import Console
 
@@ -22,8 +23,14 @@ from rich.console import Console
 )
 @click.option("-f", "--file", default="~/import.csv", help="CSV Input File")
 def main(config: str, get: bool, file: str, update: bool):
-    """This tool will retreive all current subnets assisgned to a UDDI tenant and display network and service instance ID
-    If a CSV input file is used, all subnets and their corresponding dhcp ranges will be updated to the provided HA group
+    """This tool will retreive all current subnets and associated dhcp ranges assigned to a UDDI tenant and display their current service instance assignment
+
+    If a file is used with the update flag, all subnets and their corresponding dhcp ranges will be updated to the provided HA group.
+
+    CSV Format: subnet, ha-group
+    example:
+    10.0.0.0, FAILOVER-GROUP-ONE
+    10.0.0.1, FAILOVER-GROUP-TWO
     """
 
     b1 = bloxone.b1ddi(config)
@@ -94,17 +101,17 @@ def process_file(b1, file):
                         net[0], sub_id, net[1], subnet_ha_groups[net[1]]
                     )
                 )
-                # updated_subnet(b1, sub_id, subnet_ha_groups[net[1]])
+                update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
                 if ran_id:
                     print("Range: {}".format(ran_id))
                     print("Updating DHCP Range")
-                    # update_range(b1, ran_id, subnet_ha_groups[net[1]])
+                    update_range(b1, ran_id, subnet_ha_groups[net[1]])
     else:
         print("CSV Input File Missing")
 
 
 def get_ha_id(b1, ha_group):
-    ha_id = b1.get_id("/dhcp/ha_group", key="name", value=ha_group)
+    ha_id = b1.get_id("/dhcp/ha_group", key="name", value=ha_group, include_path=True)
     return ha_id
 
 
@@ -119,9 +126,11 @@ def get_range_id(b1, parent):
 
 
 def update_subnet(b1, subnet_id, ha_group_id):
-    print("Updating {}".format(subnet_id))
+    print("Updating Subnet {}".format(subnet_id))
     updateBody = {"dhcp_host": ha_group_id}
-    updated_subnet = b1.replace("/ipam/subnet", id=subnet_id, body=updateBody)
+    updated_subnet = b1.replace(
+        "/ipam/subnet", id=subnet_id, body=json.dumps(updateBody)
+    )
     if updated_subnet.status_code != 200:
         print(updated_subnet.status_code, updated_subnet.text)
     else:
@@ -129,13 +138,13 @@ def update_subnet(b1, subnet_id, ha_group_id):
 
 
 def update_range(b1, range_id, ha_group_id):
-    print("Updating {}".format(subnet_id))
+    print("Updating Range {}".format(range_id))
     updateBody = {"dhcp_host": ha_group_id}
-    updated_range = b1.replace("/ipam/subnet", id=subnet_id, body=updateBody)
+    updated_range = b1.replace("/ipam/range", id=range_id, body=json.dumps(updateBody))
     if updated_range.status_code != 200:
         print(updated_range.status_code, updated_range.text)
     else:
-        print("Range Updated: {} {}".format(subnet_id, ha_group_id))
+        print("Range Updated: {} {}".format(range_id, ha_group_id))
 
 
 if __name__ == "__main__":
