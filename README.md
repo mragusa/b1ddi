@@ -20,6 +20,7 @@ pip3 install -r requirements.txt
 
 | B1DDI Tools | Description |
 | ---- | ---- |
+| b1ddi-framework.py | Basic B1DDI Script |
 | b1ztp-join-token.py | Get, Add, Delete B1DDI Join Tokens |
 | b1infra-host-services.py | Get, Add, Update Host / Service Assignment and Start / Stop Services |
 | b1ddi-dns-nsg.py | Get, Add, Delete B1DDI Auth NSG |
@@ -30,6 +31,7 @@ pip3 install -r requirements.txt
 | b1ddi-dhcp-profile.py | Get, Add, Delete B1DDI Global DHCP Profiles |
 | b1ddi-dhcp-options.py | Get, Add DHCP Options |
 | b1ddi-dhcp-option-filters.py | Get, Add DHCP Options Filters |
+| b1ddi-dhcp-network-service-instance.py | Get,Update Subnet/Range Service Assignment |
 
 
 ## UDDI Process
