@@ -12,6 +12,7 @@ from rich.table import Table
 )
 @click.option("--hostname", help="Hostname to Search")
 def main(config: str, hostname: str):
+    """Tool to Search BloxOne DNS records for record information"""
     table = Table(
         "FQDN",
         "Zone",
@@ -45,6 +46,9 @@ def main(config: str, hostname: str):
                 str(record["result"]["ttl"]),
                 record["result"]["type"],
             )
+            print("Unformatted Information")
+            for x in record["result"]:
+                print("{} {}".format(x, record["result"][x]))
         console = Console()
         console.print(table)
     else:
