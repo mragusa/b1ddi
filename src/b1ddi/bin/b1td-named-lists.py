@@ -2,12 +2,17 @@
 
 # TODO
 # Change PrettyTable for RichTables
+# Fix file functions to resolve possibly unbound errors
+# Rewrite file section to use functions
+# Resolve password undefined in mail function
+# assign type in main()
 import csv
 import bloxone
 from prettytable import PrettyTable
 import click
 from click_option_group import optgroup
-import smtplib, ssl
+import smtplib
+import ssl
 
 
 @click.command()
@@ -62,14 +67,34 @@ import smtplib, ssl
     help="Confidence level of item",
 )
 @optgroup.group("Email Options")
-@optgroup.option("--mail", type=bool, default=False, help="Mail output to designated people")
-@optgroup.option("--sender", multiple=True, help="SMTP Sender" )
+@optgroup.option(
+    "--mail", type=bool, default=False, help="Mail output to designated people"
+)
+@optgroup.option("--sender", multiple=True, help="SMTP Sender")
 @optgroup.option("-r", "--receipients", multiple=True, help="SMTP Receipients")
-@optgroup.option("--subject", default="Infoblox: Bloxone Threat Defense Cloud Update", help="SMTP Subject")
-@optgroup.option("-s","--server", help="SMTP Server")
-
-
-def main(config, file, listnl, create, delete, patch, name, comment, item, confidence, mail, sender, receipients, subject, server):
+@optgroup.option(
+    "--subject",
+    default="Infoblox: Bloxone Threat Defense Cloud Update",
+    help="SMTP Subject",
+)
+@optgroup.option("-s", "--server", help="SMTP Server")
+def main(
+    config,
+    file,
+    listnl,
+    create,
+    delete,
+    patch,
+    name,
+    comment,
+    item,
+    confidence,
+    mail,
+    sender,
+    receipients,
+    subject,
+    server,
+):
     # Consume b1ddi ini file for login
     b1tdc = bloxone.b1tdc(config)
     # Uncomment if needed
@@ -80,15 +105,16 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
         if name:
             try:
                 response = b1tdc.get_custom_list(name)
+                named_list(response)
             except Exception as e:
                 print(e)
-            named_list(response)
         else:
             try:
                 response = b1tdc.get_custom_lists()
+                get_named_list(response)
             except Exception as e:
                 print(e)
-            get_named_list(response)
+
     if create:
         try:
             response = b1tdc.create_custom_list(
@@ -96,9 +122,9 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
                 confidence,
                 items_described=[{"description": comment, "item": item}],
             )
+            named_list(response)
         except Exception as e:
             print(e)
-        named_list(response)
 
     if delete:
         if item and comment:
@@ -106,23 +132,23 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
                 response = b1tdc.delete_items_from_custom_list(
                     name, items_described=[{"description": comment, "item": item}]
                 )
+                if response.status_code == 204:
+                    print("{} deleted from {}".format(item, name))
+                    response = b1tdc.get_custom_list(name)
+                    named_list(response)
+                else:
+                    print(response.status_code, response.text)
             except Exception as e:
                 print(e)
-            if response.status_code == 204:
-                print("{} deleted from {}".format(item, name))
-                response = b1tdc.get_custom_list(name)
-                named_list(response)
-            else:
-                print(response.status_code, response.text)
         elif name:
             try:
                 response = b1tdc.delete_custom_lists(names=[name])
+                if response.status_code == 204:
+                    print("{} list deleted".format(name))
+                else:
+                    print(response.status_code, response.text)
             except Exception as e:
                 print(e)
-            if response.status_code == 204:
-                print("{} list deleted".format(name))
-            else:
-                print(response.status_code, response.text)
         else:
             print("Invalid Flags Specified")
 
@@ -131,14 +157,14 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
             response = b1tdc.add_items_to_custom_list(
                 name, items_described=[{"description": comment, "item": item}]
             )
+            if response.status_code == 201:
+                print("{} update successful".format(name))
+                response = b1tdc.get_custom_list(name)
+                named_list(response)
+            else:
+                print(response.status_code, response.text)
         except Exception as e:
             print(e)
-        if response.status_code == 201:
-            print("{} update successful".format(name))
-            response = b1tdc.get_custom_list(name)
-            named_list(response)
-        else:
-            print(response.status_code, response.text)
 
     if file:
         if mail:
@@ -152,18 +178,20 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
                         confidence,
                         items_described=[{"description": row[2], "item": row[3]}],
                     )
-                if row[0] == "update":
+                elif row[0] == "update":
                     response = b1tdc.add_items_to_custom_list(
                         row[1],
                         items_described=[{"description": row[2], "item": row[3]}],
                     )
-                if row[0] == "deleteitem":
+                elif row[0] == "deleteitem":
                     response = b1tdc.delete_items_from_custom_list(
                         row[1],
                         items_described=[{"description": row[2], "item": row[3]}],
                     )
-                if row[0] == "delete":
+                elif row[0] == "delete":
                     response = b1tdc.delete_custom_lists(names=[row[1]])
+                else:
+                    print("Undefined Action")
 
                 if (
                     response.status_code == 200
@@ -179,13 +207,19 @@ def main(config, file, listnl, create, delete, patch, name, comment, item, confi
                             )
                         )
                         if mail:
-                            automated_report.append("{row[1]} {row[0]} Successful : {row[3]} {row[2]}")
+                            automated_report.append(
+                                "{row[1]} {row[0]} Successful : {row[3]} {row[2]}"
+                            )
                 else:
                     print(response.status_code, response.text)
                     if mail:
-                        automated_report.append("{response.status_code} {response.text}")
+                        automated_report.append(
+                            "{response.status_code} {response.text}"
+                        )
                 if mail:
-                    send_mail_report(server, sender, receipients, subject, automated_report)
+                    send_mail_report(
+                        server, sender, receipients, subject, automated_report
+                    )
 
 
 def get_named_list(response):
@@ -272,10 +306,11 @@ def named_list(response):
     else:
         print(response.status_code, response.text)
 
+
 def send_mail_report(server, sender, receipients, subject, automated_report):
     smtp_server = server
     sender_email = sender
-    receiver_email = (','.join(receipients))
+    receiver_email = ",".join(receipients)
     message = "Subject: {} \nNamed List Updates \n{}".format(subject, automated_report)
 
     ssl_context = ssl.create_default_context()
