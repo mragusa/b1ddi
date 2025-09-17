@@ -1,5 +1,5 @@
 # Overview
-Collection of scripts for interfacing with Infoblox UDDI platform
+Collection of scripts for interfacing with [Infoblox](https://docs.infoblox.com/space/BloxOneDDI/684523986/Universal+DDI+Overview) UDDI platform
 
 ## Installation
 The following python packages will be required to run these tools:
@@ -20,7 +20,7 @@ pip3 install -r requirements.txt
 
 | B1DDI Tools | Description |
 | ---- | ---- |
-| b1ddi-framework.py | Basic B1DDI Script |
+| b1ddi-framework.py | Basic UDDI Script to connect and get an object |
 | b1ztp-join-token.py | Get, Add, Delete B1DDI Join Tokens |
 | b1infra-host-services.py | Get, Add, Update Host / Service Assignment and Start / Stop Services |
 | b1ddi-dns-nsg.py | Get, Add, Delete B1DDI Auth NSG |
