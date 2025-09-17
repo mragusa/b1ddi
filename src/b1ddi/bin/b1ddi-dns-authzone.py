@@ -23,19 +23,19 @@ from rich.table import Table
     help="Retrieve Auth Zones from UDDI",
 )
 @click.option(
-    "-c",
     "--create",
     is_flag=True,
     default=False,
     show_default=True,
     help="Create UDDI Auth Zone",
 )
-def main(config: str, get: bool, create: bool):
+@click.option("--fqdn", default="domain.com", show_default=True, help="Auth Zone Name")
+def main(config: str, get: bool, create: bool, fqdn: str):
     b1 = bloxone.b1ddi(config)
     if get:
         get_authzone(b1)
     if create:
-        create_authzone(b1)
+        create_authzone(b1, fqdn)
 
 
 def get_authzone(b1):
@@ -45,6 +45,19 @@ def get_authzone(b1):
     else:
         auth_zones = b1_authzone.json()
         print_zones(b1, auth_zones)
+
+
+def create_authzone(b1, fqdn):
+    # TODO
+    # Add support for NSG
+    # Add support for external primaries
+    # Change primary_type to choice arg
+    auth_zone_body = {"fqdn": fqdn, "primary_type": "cloud"}
+    b1_authzone = b1.create("/dns/auth_zone", body=auth_zone_body)
+    if b1_authzone.status_code != 201:
+        print(b1_authzone.status_code, b1_authzone.text)
+    else:
+        print(b1_authzone.json())
 
 
 def print_zones(b1, auth_zones):
