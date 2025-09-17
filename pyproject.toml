@@ -1,23 +1,18 @@
+[project]
+name = "uddi-operational-tools"
+version = "0.0.1"
+description = "Infoblox UDDI Operational Tools"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.8"
+authors = [{ name = "Michael Ragusa", email = "mragusa@infoblox.com" }]
+maintainers = [{ name = "Michael Ragusa", email = "mragusa@infoblox.com" }]
+dependencies = ["bloxone", "click", "click-option-group", "rich", "prettytable"]
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "bloxone-operational-tools"
-version = "0.0.1"
-description = "Infoblox BloxOne Operational Tools"
-readme = "README.md"
-license = {file = "LICENSE.txt"}
-requires-python = ">=3.8"
-authors = [{name = "Michael Ragusa", email="mragusa@infoblox.com"}]
-maintainers = [{name = "Michael Ragusa", email="mragusa@infoblox.com"}]
-dependencies = [
-  "bloxone",
-  "click",
-  "click-option-group",
-  "rich",
-  "prettytable"
-]
 keywords = ["infoblox", "b1ddi", "bloxone", "uddi", "dns", "dhcp"]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -60,3 +55,6 @@ where = ["src"]
 [tool.pyright]
 venvPath = "."
 venv = "venv"
+
+[tool.poetry]
+package-mode = true
