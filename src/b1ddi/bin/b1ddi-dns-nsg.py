@@ -10,7 +10,7 @@ from click_option_group import optgroup
 
 
 # TODO
-# Add functionality for external primaries, external secondaries,  additional options for niosx hosts
+# Add functionality for additional options for niosx hosts
 # Add functionality for providing tsig keys
 
 
@@ -37,9 +37,18 @@ from click_option_group import optgroup
 @optgroup.option("--ansgid", help="Auth NSG ID")
 @optgroup.group("BloxOne New AuthNSG Options")
 @optgroup.option("--host", multiple=True, default=[], help="BloxOne Host")
-@optgroup.option("--ansgname", help="NSG Name")
+@optgroup.option("--ansgname", help="Auth NSG Name")
 @optgroup.option("--comment", help="NSG Comment")
-def main(config, get, new, delete, host, ansgname, comment, ansgid):
+def main(
+    config: str,
+    get: bool,
+    new: bool,
+    delete: bool,
+    host: list,
+    ansgname: str,
+    comment: str,
+    ansgid: str,
+):
     b1ddi = bloxone.b1ddi(config)
     if get:
         # Display available hosts
@@ -66,6 +75,8 @@ def get_dns_hosts(b1ddi):
             "Serial Number",
             "Type",
             title="BloxOne DNS Hosts",
+            highlight=True,
+            row_styles=["dim", ""],
         )
         dnsHosts = response.json()
         for x in dnsHosts["results"]:
@@ -98,23 +109,37 @@ def get_auth_nsg(b1ddi):
             "NSG",
             "Tags",
             title="BloxOne Name Server Groups",
+            highlight=True,
+            row_styles=["dim", ""],
         )
         for x in authNsg["results"]:
+            inS = []
+            exP = []
             if not x["external_primaries"]:
                 x["external_primaries"] = "None"
+            else:
+                for p in x["external_primaries"]:
+                    if p["address"]:
+                        exP.append(p["address"])
+                    if p["fqdn"]:
+                        exP.append(p["fqdn"])
+                    if p["nsg"]:
+                        exP.append(get_nsgs_name(b1ddi, p["nsg"]))
+            if not x["internal_secondaries"]:
+                x["internal_secondaries"] = "None"
+            else:
+                for s in x["internal_secondaries"]:
+                    inS.append(s["host"])
             if not x["nsgs"]:
                 x["nsgs"] = "None"
             if not x["tags"]:
                 x["tags"] = "None"
-            inS = []
-            for s in x["internal_secondaries"]:
-                inS.append(s["host"])
             table.add_row(
                 x["name"],
                 x["comment"],
                 x["id"],
-                x["external_primaries"],
-                "\n".join(inS),
+                str("\n".join(exP)),
+                str("\n".join(inS)),
                 x["nsgs"],
                 x["tags"],
             )
@@ -147,6 +172,17 @@ def delete_auth_nsg(b1ddi, ansgid):
         get_auth_nsg(b1ddi)
     else:
         print(response.status_code, response.text)
+
+
+def get_nsgs_name(b1, nsgs):
+    print(nsgs)
+    b1_nsg_id = nsgs.split("/")
+    b1_nsgs = b1.get("/dns/auth_nsg", id=b1_nsg_id[2])
+    if b1_nsgs.status_code != 200:
+        print(f"Error retreiving nsgs: {b1_nsgs.status_code} {b1_nsgs.text}")
+    else:
+        nsgs = b1_nsgs.json()
+        return nsgs["result"]["name"]
 
 
 if __name__ == "__main__":
