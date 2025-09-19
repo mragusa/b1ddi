@@ -3,7 +3,7 @@
 import bloxone
 import click
 from rich.console import Console
-from rich.table import Table
+from rich.table import Column, Table
 
 
 @click.command()
@@ -61,13 +61,17 @@ def create_authzone(b1, fqdn):
 
 
 def print_zones(b1, auth_zones):
-    table = Table(title="Infoblox UDDI Auth Zones")
-    table.add_column("FQDN", justify="center")
-    table.add_column("ID", justify="center")
-    table.add_column("NSG", justify="center")
-    table.add_column("Grid Primaries", justify="center")
-    table.add_column("Grid Secondaries", justify="center")
-    table.add_column("Primary Type", justify="center")
+    table = Table(
+        Column(header="FQDN", justify="center"),
+        Column(header="ID", justify="center"),
+        Column(header="NSG", justify="center"),
+        Column(header="Grid Primaries", justify="center"),
+        Column(header="Grid Secondaries", justify="center"),
+        Column(header="Primary Type", justify="center"),
+        title="Infoblox UDDI Auth Zones",
+        highlight=True,
+        row_styles=["dim", ""],
+    )
     for az in auth_zones["results"]:
         table.add_row(
             az["fqdn"],
