@@ -129,7 +129,7 @@ def get_auth_nsg(b1ddi):
                 x["internal_secondaries"] = "None"
             else:
                 for s in x["internal_secondaries"]:
-                    inS.append(s["host"])
+                    inS.append(get_host_name(b1ddi, s["host"]))
             if not x["nsgs"]:
                 x["nsgs"] = "None"
             if not x["tags"]:
@@ -175,14 +175,23 @@ def delete_auth_nsg(b1ddi, ansgid):
 
 
 def get_nsgs_name(b1, nsgs):
-    print(nsgs)
     b1_nsg_id = nsgs.split("/")
     b1_nsgs = b1.get("/dns/auth_nsg", id=b1_nsg_id[2])
     if b1_nsgs.status_code != 200:
         print(f"Error retreiving nsgs: {b1_nsgs.status_code} {b1_nsgs.text}")
     else:
-        nsgs = b1_nsgs.json()
-        return nsgs["result"]["name"]
+        b1_nsg = b1_nsgs.json()
+        return b1_nsg["result"]["name"]
+
+
+def get_host_name(b1, dns_host):
+    b1_host_id = dns_host.split("/")
+    b1_host = b1.get("/dns/host", id=b1_host_id[2])
+    if b1_host.status_code != 200:
+        print(f"Error retreiving nsgs: {b1_host.status_code} {b1_host.text}")
+    else:
+        host = b1_host.json()
+        return host["result"]["name"]
 
 
 if __name__ == "__main__":
