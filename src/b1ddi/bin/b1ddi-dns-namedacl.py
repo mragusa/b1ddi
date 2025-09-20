@@ -12,7 +12,9 @@ from rich.table import Table
 @click.option(
     "-c", "--config", default="~/b1ddi/b1config.ini", help="BloxOne DDI Config File"
 )
-@click.option("-g", "--get", is_flag=True, help="Retrieve ACL Information")
+@click.option(
+    "-g", "--get", is_flag=True, default=False, help="Retrieve ACL Information"
+)
 def main(config: str, get: bool):
     b1 = bloxone.b1ddi(config)
     if get:
@@ -26,7 +28,9 @@ def get_acl(b1):
     else:
         named_list = b1_acl.json()
         for x in named_list["results"]:
-            table = Table(title=x["name"] + " " + x["id"], row_styles=["dim", ""])
+            table = Table(
+                title=x["name"] + " " + x["id"], row_styles=["dim", ""], highlight=True
+            )
             table.add_column("Access", justify="center")
             table.add_column("Nested ACL", justify="center")
             table.add_column("Address", justify="center")

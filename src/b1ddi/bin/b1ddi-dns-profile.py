@@ -12,9 +12,15 @@ from rich.table import Table
 @optgroup.group("BloxOne Configuration File")
 @optgroup.option("-c", "--config", default="b1config.ini", help="BloxOne Ini File")
 @optgroup.group("BloxOne DNS Config Actions")
-@optgroup.option("-g", "--get", is_flag=True, help="Get current DNS Configurations")
-@optgroup.option("-n", "--new", is_flag=True, help="Create new DNS Configurations")
-@optgroup.option("-d", "--delete", is_flag=True, help="Delete new DNS Configurations")
+@optgroup.option(
+    "-g", "--get", is_flag=True, default=False, help="Get current DNS Configurations"
+)
+@optgroup.option(
+    "-n", "--new", is_flag=True, default=False, help="Create new DNS Configurations"
+)
+@optgroup.option(
+    "-d", "--delete", is_flag=True, default=False, help="Delete new DNS Configurations"
+)
 @optgroup.group("New DNS Profile Options")
 @optgroup.option("--name", help="DNS Profile Name")
 @optgroup.option("--comment", help="Profile Description")
