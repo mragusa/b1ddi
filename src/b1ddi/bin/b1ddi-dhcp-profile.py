@@ -10,19 +10,39 @@ from rich.table import Table
 
 @click.command()
 @optgroup.group("BloxOne Configuration File")
-@optgroup.option("-c", "--config", default="b1config.ini", help="BloxOne Ini File")
+@optgroup.option(
+    "-c", "--config", default="b1config.ini", show_default=True, help="BloxOne Ini File"
+)
 @optgroup.group("BloxOne DHCP Config Actions")
-@optgroup.option("-g", "--get", is_flag=True, help="Get current DHCP Configurations")
-@optgroup.option("-n", "--new", is_flag=True, help="Create new DHCP Configurations")
-@optgroup.option("-d", "--delete", is_flag=True, help="Delete new DHCP Configurations")
-@optgroup.option("-u", "--update", is_flag=True, help="Delete new DHCP Configurations")
+@optgroup.option(
+    "-g", "--get", is_flag=True, default=False, help="Get current DHCP Configurations"
+)
+@optgroup.option(
+    "-n", "--new", is_flag=True, default=False, help="Create new DHCP Configurations"
+)
+@optgroup.option(
+    "-d", "--delete", is_flag=True, default=False, help="Delete new DHCP Configurations"
+)
+@optgroup.option(
+    "-u", "--update", is_flag=True, default=False, help="Delete new DHCP Configurations"
+)
 @optgroup.group("New DHCP Profile Options")
 @optgroup.option("--name", help="DHCP Profile Name")
 @optgroup.option("--comment", help="Profile Description")
 @optgroup.group("DHCP Profile Options")
 @optgroup.option("--id", help="Profile or Host ID")
 @optgroup.option("--serverid", help="DHCP Server ID")
-def main(config, get, new, delete, update, name, comment, id, serverid):
+def main(
+    config: str,
+    get: bool,
+    new: bool,
+    delete: bool,
+    update: bool,
+    name: str,
+    comment: str,
+    id: str,
+    serverid: str,
+):
     b1ddi = bloxone.b1ddi(config)
     if get:
         get_dhcp_global(b1ddi)
@@ -39,7 +59,13 @@ def get_dhcp_global(b1ddi):
     if response.status_code == 200:
         dhcpGlobal = response.json()
         table = Table(
-            "Created", "Name", "Comment", "ID", title="BloxOne DHCP Configurations"
+            "Created",
+            "Name",
+            "Comment",
+            "ID",
+            title="BloxOne DHCP Configurations",
+            highlight=True,
+            row_styles=["dim", ""],
         )
         for x in dhcpGlobal["results"]:
             table.add_row(x["created_at"], x["name"], x["comment"], x["id"])
@@ -57,11 +83,13 @@ def get_dhcp_hosts(b1ddi):
         hostTable = Table(
             "Name",
             "Address",
-            "Comment",
             "ID",
+            "Comment",
             "DHCP Profile",
             "DHCP Config ID",
             title="BloxOne DHCP Hosts",
+            highlight=True,
+            row_styles=["dim", ""],
         )
         for x in b1Hosts["results"]:
             if x["associated_server"] == None:
@@ -69,8 +97,8 @@ def get_dhcp_hosts(b1ddi):
             hostTable.add_row(
                 x["name"],
                 x["address"],
-                x["comment"],
                 x["id"],
+                x["comment"],
                 x["associated_server"]["name"],
                 x["server"],
             )
