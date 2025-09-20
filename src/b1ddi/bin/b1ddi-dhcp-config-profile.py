@@ -4,13 +4,17 @@ import bloxone
 import click
 from click_option_group import optgroup
 from rich.console import Console
-from rich.table import Table
+from rich.table import Column, Table
 
 
 @click.command()
 @optgroup.group("Bloxone Configuration")
 @optgroup.option(
-    "-c", "--config", default="~/b1ddi/b1config.ini", help="Bloxone DDI Config File"
+    "-c",
+    "--config",
+    default="~/b1ddi/b1config.ini",
+    show_default=True,
+    help="Bloxone DDI Config File",
 )
 @optgroup.group("Get Actions")
 @optgroup.option(
@@ -33,16 +37,15 @@ def get_dhcp_server_config(b1):
 
 def displayresults(results):
     table = Table(
+        Column("Name", justify="center"),
+        Column("ID", justify="center"),
+        Column("Comment", justify="center"),
+        Column("Profile Type", justify="center"),
+        Column("Created", justify="center"),
         title="UDDI DHCP Configuration Profiles",
         row_styles=["dim", ""],
-        style="dark_green",
-        header_style="bright_white",
+        highlight=True,
     )
-    table.add_column("Name", justify="center", style="green1")
-    table.add_column("ID", justify="center", style="bright_white")
-    table.add_column("Comment", justify="center", style="green1")
-    table.add_column("Profile Type", justify="center", style="bright_white")
-    table.add_column("Created", justify="center", style="green1")
     for c in results:
         table.add_row(
             c["name"], c["id"], c["comment"], c["profile_type"], c["created_at"]
