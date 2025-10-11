@@ -1,6 +1,6 @@
 [project]
 name = "b1ddi"
-version = "0.0.2"
+version = "0.0.3"
 description = "Infoblox UDDI Operational Tools"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
@@ -101,7 +101,8 @@ b1-join = "b1ddi.bin.b1ztp-join-token:main"
 b1-td-nl = "b1ddi.bin.b1td-named-lists:main"
 
 [project.urls]
-"homepage" = "https://github.com/mragusa/b1ddi"
+"github" = "https://github.com/mragusa/b1ddi"
+"repository" = "https://github.com/mragusa/b1ddi.git"
 
 [tools.setuptools]
 packages = ["diagnostics"]
