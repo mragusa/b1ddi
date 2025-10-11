@@ -1,6 +1,9 @@
 # Overview
 Collection of scripts for interfacing with [Infoblox](https://docs.infoblox.com/space/BloxOneDDI/684523986/Universal+DDI+Overview) UDDI platform
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+
 ## Installation
 The following python packages will be required to run these tools:
 - [bloxone](https://github.com/ccmarris/python-bloxone)
