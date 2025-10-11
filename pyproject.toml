@@ -64,6 +64,7 @@ dependencies = [
   "wcwidth (>=0.2.14,<0.3.0)",
   "xattr (==1.2.0)",
   "zstandard (==0.25.0)",
+  "pip (>=25.2,<26.0)",
 ]
 
 [build-system]
