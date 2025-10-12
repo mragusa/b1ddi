@@ -2,6 +2,7 @@
 Collection of scripts for interfacing with [Infoblox](https://docs.infoblox.com/space/BloxOneDDI/684523986/Universal+DDI+Overview) UDDI platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
 ## Installation
@@ -13,6 +14,14 @@ The following python packages will be required to run these tools:
 - [rich](https://github.com/Textualize/rich)
 ```
 pip3 install -r requirements.txt
+```
+
+## Poetry
+```
+git clone https://github.com/mragusa/b1ddi.git
+cd b1ddi; poetry install
+```
+```
 ```
 
 ## Scripts
@@ -53,4 +62,3 @@ pip3 install -r requirements.txt
 | b1ztp-join-token.py | Get, Add, Delete B1DDI Join Tokens |
 | b1infra-host-services.py | Get, Add, Update Host / Service Assignment and Start / Stop Services |
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
