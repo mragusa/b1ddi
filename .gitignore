@@ -1,4 +1,4 @@
-venv/
+.venv/
 dist/
 b1config.ini
 .b1ddi-api.txt
