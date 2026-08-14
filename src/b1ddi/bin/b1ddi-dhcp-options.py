@@ -25,6 +25,7 @@ from rich.table import Table
 @optgroup.option("-n", "--new", is_flag=True, help="New DHCP Options")
 @optgroup.group("New DHCP Options")
 @optgroup.option("--code", help="DHCP Code")
+@optgroup.option("--name", help="DHCP Code Name")
 @optgroup.option("--codetype", help="DHCP Code Type")
 @optgroup.option("--allowmultiple", type=bool, default=False, help="Allow Multiple")
 @optgroup.option("--optionspace", help="BloneOne DHCP Option Space")
@@ -32,7 +33,17 @@ from rich.table import Table
     "--comment", default="Customer Imported DHCP Option", help="DHCP Option Comment"
 )
 def main(
-    config, file, get, new, codes, code, codetype, allowmultiple, optionspace, comment
+    config: str,
+    file: str,
+    get: bool,
+    new: bool,
+    codes: bool,
+    code: int,
+    name: str,
+    codetype: str,
+    allowmultiple: bool,
+    optionspace: str,
+    comment: str,
 ):
     b1ddi = bloxone.b1ddi(config)
     if get:
