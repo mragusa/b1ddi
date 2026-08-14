@@ -27,7 +27,7 @@ from click_option_group import optgroup
 @optgroup.group("Delete View Options")
 @optgroup.option("--id", help="DNS View ID")
 def main(config, get, new, delete, ipspace, name, comment, id):
-    b1ddi = bloxone.b1ddi("b1config.ini")
+    b1ddi = bloxone.b1ddi(config)
     if get:
         get_dns_view(b1ddi)
     if new:
