@@ -39,7 +39,9 @@ def get_subnet(b1):
                     service_instance[dhcp_range["result"]["dhcp_host"]],
                 )
             else:
-                subTable.add_row(net["address"], net["dhcp_host"], "None", "None")
+                subTable.add_row(
+                    net["address"], service_instance[net["dhcp_host"]], "None", "None"
+                )
         console.print(subTable)
 
 
@@ -92,6 +94,12 @@ def get_ha_name(b1, srv_id):
     ha_name = b1.get("/dhcp/ha_group", id=srv_id)
     if ha_name.status_code != 200:
         print(ha_name.status_code, ha_name.text)
+        ha_name = b1.get("/dhcp/host", id=srv_id)
+        if ha_name.status_code != 200:
+            print(ha_name.status_code, ha_name.text)
+            return "Unknown"
+        else:
+            return ha_name.json()["result"]["name"]
     else:
         return ha_name.json()["result"]["name"]
 
