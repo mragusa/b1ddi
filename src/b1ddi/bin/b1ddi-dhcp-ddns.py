@@ -6,19 +6,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-
-@click.command()
-@click.option(
-    "-c", "--config", default="~/b1ddi/b1config.ini", help="Bloxone DDI Config File"
-)
-@click.option("--getddns", is_flag=True, help="Retrieve Current DDNS Configuration")
-@click.option("--add", is_flag=True, help="Add Current DNS Zone to DDNS Configuration")
-def main(config: str, getddns: bool, add: bool):
-    b1 = bloxone.b1ddi(config)
-    if getddns:
-        current_ddns(b1)
-    if add:
-        add_domains(b1)
+console = Console()
 
 
 def current_ddns(b1):
@@ -51,11 +39,14 @@ def viewid(b1, view):
 def add_domains(b1):
     ddns_list = []
     dns_zones = find_zones(b1)
-    for z in dns_zones["results"]:
-        zone_id = zoneid(b1, z["fqdn"])
-        ddns_list.append({"zone": zone_id})
-    add_ddns(b1, ddns_list)
-    current_ddns(b1)
+    if dns_zones:
+        for z in dns_zones["results"]:
+            zone_id = zoneid(b1, z["fqdn"])
+            ddns_list.append({"zone": zone_id})
+        add_ddns(b1, ddns_list)
+        current_ddns(b1)
+    else:
+        print("No DNS Zones Found")
 
 
 def add_ddns(b1, ddns_zones):
@@ -90,8 +81,21 @@ def display_ddns(b1_ddns):
             z["tsig_key"],
             str(z["nameservers"]),
         )
-    console = Console()
     console.print(table)
+
+
+@click.command()
+@click.option(
+    "-c", "--config", default="~/b1ddi/b1config.ini", help="Bloxone DDI Config File"
+)
+@click.option("--getddns", is_flag=True, help="Retrieve Current DDNS Configuration")
+@click.option("--add", is_flag=True, help="Add Current DNS Zone to DDNS Configuration")
+def main(config: str, getddns: bool, add: bool):
+    b1 = bloxone.b1ddi(config)
+    if getddns:
+        current_ddns(b1)
+    if add:
+        add_domains(b1)
 
 
 if __name__ == "__main__":
