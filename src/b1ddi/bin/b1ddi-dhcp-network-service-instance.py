@@ -7,37 +7,7 @@ import json
 from rich.table import Table
 from rich.console import Console
 
-
-@click.command()
-@click.option(
-    "-c", "--config", default="~/b1ddi/b1config.ini", help="Bloxone DDI Config File"
-)
-@click.option(
-    "-g", "--get", is_flag=True, help="Retrieve current subnet and service assignment"
-)
-@click.option(
-    "-u",
-    "--update",
-    is_flag=True,
-    help="Update subnet and service assignment from CSV import file",
-)
-@click.option("-f", "--file", default="~/import.csv", help="CSV Input File")
-def main(config: str, get: bool, file: str, update: bool):
-    """This tool will retreive all current subnets and associated dhcp ranges assigned to a UDDI tenant and display their current service instance assignment
-
-    If a file is used with the update flag, all subnets and their corresponding dhcp ranges will be updated to the provided HA group.
-
-    CSV Format: subnet, ha-group
-    example:
-    10.0.0.0, FAILOVER-GROUP-ONE
-    10.0.0.1, FAILOVER-GROUP-TWO
-    """
-
-    b1 = bloxone.b1ddi(config)
-    if get:
-        get_subnet(b1)
-    if update:
-        process_file(b1, file)
+console = Console()
 
 
 def get_subnet(b1):
@@ -66,7 +36,6 @@ def get_subnet(b1):
                 )
             else:
                 subTable.add_row(net["address"], net["dhcp_host"], "None", "None")
-        console = Console()
         console.print(subTable)
 
 
@@ -145,6 +114,38 @@ def update_range(b1, range_id, ha_group_id):
         print(updated_range.status_code, updated_range.text)
     else:
         print("Range Updated: {} {}".format(range_id, ha_group_id))
+
+
+@click.command()
+@click.option(
+    "-c", "--config", default="~/b1ddi/b1config.ini", help="Bloxone DDI Config File"
+)
+@click.option(
+    "-g", "--get", is_flag=True, help="Retrieve current subnet and service assignment"
+)
+@click.option(
+    "-u",
+    "--update",
+    is_flag=True,
+    help="Update subnet and service assignment from CSV import file",
+)
+@click.option("-f", "--file", default="~/import.csv", help="CSV Input File")
+def main(config: str, get: bool, file: str, update: bool):
+    """This tool will retreive all current subnets and associated dhcp ranges assigned to a UDDI tenant and display their current service instance assignment
+
+    If a file is used with the update flag, all subnets and their corresponding dhcp ranges will be updated to the provided HA group.
+
+    CSV Format: subnet, ha-group\n
+    Example:\n
+        10.0.0.0, FAILOVER-GROUP-ONE\n
+        10.0.0.1, FAILOVER-GROUP-TWO
+    """
+
+    b1 = bloxone.b1ddi(config)
+    if get:
+        get_subnet(b1)
+    if update:
+        process_file(b1, file)
 
 
 if __name__ == "__main__":
