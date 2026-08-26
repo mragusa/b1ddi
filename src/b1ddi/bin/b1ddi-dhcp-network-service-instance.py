@@ -11,6 +11,7 @@ console = Console()
 
 
 def get_subnet(b1):
+    service_instance = {}
     b1_subnet = b1.get("/ipam/subnet")
     if b1_subnet.status_code != 200:
         print(b1_subnet.status_code, b1_subnet.text)
@@ -27,12 +28,15 @@ def get_subnet(b1):
         )
         for net in subnets["results"]:
             dhcp_range = get_range(b1, net["id"])
+            if net["dhcp_host"] not in service_instance:
+                srv_id = net["dhcp_host"].split("/")[-1]
+                service_instance[net["dhcp_host"]] = get_ha_name(b1, srv_id)
             if dhcp_range is not None:
                 subTable.add_row(
                     net["address"],
-                    net["dhcp_host"],
+                    service_instance[net["dhcp_host"]],
                     dhcp_range["result"]["id"],
-                    dhcp_range["result"]["dhcp_host"],
+                    service_instance[dhcp_range["result"]["dhcp_host"]],
                 )
             else:
                 subTable.add_row(net["address"], net["dhcp_host"], "None", "None")
@@ -82,6 +86,14 @@ def process_file(b1, file):
 def get_ha_id(b1, ha_group):
     ha_id = b1.get_id("/dhcp/ha_group", key="name", value=ha_group, include_path=True)
     return ha_id
+
+
+def get_ha_name(b1, srv_id):
+    ha_name = b1.get("/dhcp/ha_group", id=srv_id)
+    if ha_name.status_code != 200:
+        print(ha_name.status_code, ha_name.text)
+    else:
+        return ha_name.json()["result"]["name"]
 
 
 def get_subnet_id(b1, address):
