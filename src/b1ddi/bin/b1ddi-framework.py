@@ -7,29 +7,6 @@ from rich.table import Column, Table
 from rich import box
 
 
-@click.command()
-@click.option(
-    "-c", "--config", default="~/b1ddi/b1config.ini", help="bloxone ddi config file"
-)
-@click.option(
-    "-g",
-    "--get",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Retrieve DNS views",
-)
-def main(config: str, get: bool):
-    """Example Infoblox UDDI python script"""
-    b1 = bloxone.b1ddi(config)
-    if get:
-        dns_view = get_view(b1)
-        if dns_view:
-            report_dns_view(dns_view)
-        else:
-            print("Unable to retreive UDDI DNS Views")
-
-
 def get_view(b1):
     b1_dns_view = b1.get("/dns/view")
     if b1_dns_view.status_code != 200:
@@ -60,6 +37,29 @@ def report_dns_view(dns_view):
         )
     console = Console()
     console.print(table)
+
+
+@click.command()
+@click.option(
+    "-c", "--config", default="~/b1ddi/b1config.ini", help="bloxone ddi config file"
+)
+@click.option(
+    "-g",
+    "--get",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Retrieve DNS views",
+)
+def main(config: str, get: bool):
+    """Example Infoblox UDDI python script"""
+    b1 = bloxone.b1ddi(config)
+    if get:
+        dns_view = get_view(b1)
+        if dns_view:
+            report_dns_view(dns_view)
+        else:
+            print("Unable to retreive UDDI DNS Views")
 
 
 if __name__ == "__main__":
