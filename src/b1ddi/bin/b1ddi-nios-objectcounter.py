@@ -126,7 +126,7 @@ def collect_nios_record_count(wapi, nios, b1, verify):
 
 def verify_nios_uddi(b1, hostname):
     record_verify = b1.get(
-        "/dns/record", _filter=f"dns_absolute_zone_name=='{hostname}'"
+        "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}'"
     )
     if record_verify.status_code != 200:
         print(f"{record_verify.status_code} : {record_verify.text}")
@@ -169,10 +169,7 @@ def main(config: str, grid_mgr: str, wapi_ver: str, username: str, verify: bool)
     for uddi, nios in zip(uddi_record_types, nios_record_types):
         uddi_count = collect_uddi_record_count(b1, uddi)
         nios_count = collect_nios_record_count(wapi, nios, b1, verify)
-        if uddi_count:
-            print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
-        else:
-            print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
+        print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
 
 
 if __name__ == "__main__":
