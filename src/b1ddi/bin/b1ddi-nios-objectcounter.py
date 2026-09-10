@@ -7,9 +7,11 @@ import click
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
 from rich.console import Console
+from rich.progress import Progress
 
 console = Console()
 wapi = Gift()
+
 uddi_record_types = [
     "A",
     "AAAA",
@@ -86,9 +88,43 @@ def collect_uddi_record_count(b1, uddi):
     return record_count
 
 
-def collect_nios_record_count(wapi, nios):
+def collect_nios_record_count(wapi, nios, b1, verify):
     nios_count = wapi.get(nios, params={"_max_results": 100000, "_return_as_object": 1})
+    if nios_count.status_code != 200:
+        print(f"NIOS Error: {nios_count.status_code} : {nios_count.text}")
+    else:
+        if verify:
+            nios_in_uddi = 0
+            with Progress() as progress:
+                verify_task = progress.add_task(
+                    "[blue]Verificaton Progress",
+                    total=len(nios_count.json().get("result")),
+                )
+                for r in nios_count.json().get("result"):
+                    if "ptrdname" in r:
+                        verified = verify_nios_uddi(b1, r["ptrdname"])
+                    else:
+                        verified = verify_nios_uddi(b1, r["name"])
+                    nios_in_uddi += verified
+                    progress.update(verify_task, advance=1)
+            print(f"Total {nios} verified: {nios_in_uddi}")
+            print(
+                f'UDDI Count: {nios_in_uddi} NIOS Count{len(nios_count.json().get("result"))}'
+            )
     return len(nios_count.json().get("result"))
+
+
+def verify_nios_uddi(b1, hostname):
+    record_verify = b1.get(
+        "/dns/record", _filter=f"dns_absolute_zone_name=='{hostname}'"
+    )
+    if record_verify.status_code != 200:
+        print(f"{record_verify.status_code} : {record_verify.text}")
+    else:
+        for r in record_verify.json().get("results"):
+            print(r)
+        return 1
+    return 0
 
 
 @click.command()
@@ -110,13 +146,19 @@ def collect_nios_record_count(wapi, nios):
     show_default=True,
     help="Infoblox WAPI version",
 )
-def main(config: str, grid_mgr: str, wapi_ver: str, username: str):
-    """Compare Record Object Counts between BloxOne DDI and NIOS"""
+@click.option(
+    "--verify",
+    is_flag=True,
+    default=False,
+    help="Verify NIOS records exist in BloxOne DDI",
+)
+def main(config: str, grid_mgr: str, wapi_ver: str, username: str, verify: bool):
+    """Compare Record Object Counts between BloxOne DDI and NIOS\nVerify NIOS records in UDDI and display missing records"""
     b1 = connect_uddi(config)
     wapi = connect_nios(grid_mgr, username, wapi_ver)
     for uddi, nios in zip(uddi_record_types, nios_record_types):
         uddi_count = collect_uddi_record_count(b1, uddi)
-        nios_count = collect_nios_record_count(wapi, nios)
+        nios_count = collect_nios_record_count(wapi, nios, b1, verify)
         if uddi_count:
             print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
         else:
