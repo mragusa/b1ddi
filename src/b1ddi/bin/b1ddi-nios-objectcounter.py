@@ -6,7 +6,9 @@ import bloxone
 import click
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
+from rich.console import Console
 
+console = Console()
 wapi = Gift()
 uddi_record_types = [
     "A",
@@ -22,8 +24,6 @@ uddi_record_types = [
     "NAPTR",
     "NS",
     "PTR",
-    "SOA",
-    "SSHFP",
     "SRV",
     "SVCB",
     "TXT",
@@ -43,12 +43,52 @@ nios_record_types = [
     "record:naptr",
     "record:ns",
     "record:ptr",
-    "record:soa",
-    "record:sshfp",
     "record:srv",
     "record:svcb",
     "record:txt",
 ]
+
+
+def connect_uddi(config):
+    b1p = bloxone.b1platform(config)
+    customer = b1p.get_current_tenant()
+    b1 = bloxone.b1ddi(config)
+    if customer:
+        console.print(f"Connected to Tenant: [white]{customer}[/white]")
+    return b1
+
+
+def connect_nios(grid_mgr, username, wapi_ver):
+    wapi.grid_mgr = grid_mgr
+    wapi.wapi_ver = wapi_ver
+    wapi.timeout = 1200
+    password = getpass.getpass(f"Enter password for [{username}]: ")
+    try:
+        wapi.connect(username=username, password=password)
+    except WapiRequestException as err:
+        console.print(f"Error:[red] {err}[/red]")
+        sys.exit(1)
+    else:
+        print(f"Connected to Infoblox grid manager {wapi.grid_mgr}")
+    return wapi
+
+
+def collect_uddi_record_count(b1, uddi):
+    record_count = 0
+    uddi_count = b1.get(
+        "/dns/record", _filter=f"type=='{uddi}'", _limit=1000, _offset=0
+    )
+    if uddi_count.status_code != 200:
+        print(f"UDDI Error http error {uddi_count.status_code} : {uddi_count.text}")
+    else:
+        for r in uddi_count.json().get("results", []):
+            record_count += len(r)
+    return record_count
+
+
+def collect_nios_record_count(wapi, nios):
+    nios_count = wapi.get(nios, params={"_max_results": 100000, "_return_as_object": 1})
+    return len(nios_count.json().get("result"))
 
 
 @click.command()
@@ -66,32 +106,21 @@ nios_record_types = [
 @click.option(
     "-w",
     "--wapi-ver",
-    default="2.12.3",
+    default="2.13.7",
     show_default=True,
     help="Infoblox WAPI version",
 )
 def main(config: str, grid_mgr: str, wapi_ver: str, username: str):
-    """Compare Object Counts between BloxOne DDI and NIOS"""
-    b1 = bloxone.b1ddi(config)
-    wapi.grid_mgr = grid_mgr
-    wapi.wapi_ver = wapi_ver
-    wapi.timeout = 600
-    password = getpass.getpass(f"Enter password for [{username}]: ")
-    try:
-        wapi.connect(username=username, password=password)
-    except WapiRequestException as err:
-        print(f"Error: {err}")
-        sys.exit(1)
-    else:
-        print(f"Connected to Infoblox grid manager {wapi.grid_mgr}")
+    """Compare Record Object Counts between BloxOne DDI and NIOS"""
+    b1 = connect_uddi(config)
+    wapi = connect_nios(grid_mgr, username, wapi_ver)
     for uddi, nios in zip(uddi_record_types, nios_record_types):
-        uddi_count = b1.get("/dns/record", type=uddi)
-        nios_count = wapi.get(
-            nios, params={"_max_results": 100000, "_return_as_object": 1}
-        )
-        print(
-            f"{uddi} / {nios}: BloxOne DDI Count: {uddi_count.json().get("results")}, NIOS Count: {nios_count["result"]}"
-        )
+        uddi_count = collect_uddi_record_count(b1, uddi)
+        nios_count = collect_nios_record_count(wapi, nios)
+        if uddi_count:
+            print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
+        else:
+            print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
 
 
 if __name__ == "__main__":
