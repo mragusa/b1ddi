@@ -94,23 +94,33 @@ def collect_nios_record_count(wapi, nios, b1, verify):
         print(f"NIOS Error: {nios_count.status_code} : {nios_count.text}")
     else:
         if verify:
+            missing_records = []
             nios_in_uddi = 0
             with Progress() as progress:
-                verify_task = progress.add_task(
-                    "[blue]Verificaton Progress",
+                count_task = progress.add_task(
+                    "[white]Verificaton Progress",
                     total=len(nios_count.json().get("result")),
                 )
+                missing_task = progress.add_task("[red]Missing", total=None)
+                verified_task = progress.add_task("[green]Verified", total=None)
                 for r in nios_count.json().get("result"):
+                    progress.update(count_task, advance=1)
                     if "ptrdname" in r:
                         verified = verify_nios_uddi(b1, r["ptrdname"])
                     else:
                         verified = verify_nios_uddi(b1, r["name"])
+                    if verified == 1:
+                        progress.update(verified_task, advance=1)
+                    else:
+                        missing_records.append(r)
+                        progress.update(missing_task, advance=1)
                     nios_in_uddi += verified
-                    progress.update(verify_task, advance=1)
             print(f"Total {nios} verified: {nios_in_uddi}")
             print(
                 f'UDDI Count: {nios_in_uddi} NIOS Count{len(nios_count.json().get("result"))}'
             )
+            with open("missing.txt", "w") as f:
+                print(missing_records, file=f)
     return len(nios_count.json().get("result"))
 
 
