@@ -4,6 +4,15 @@ import bloxone
 import click
 
 
+def get_record(b1):
+    b1_record = b1.get("/dns/record", _limit=1000, _offset=0)
+    if b1_record.status_code != 200:
+        print(b1_record.status_code, b1_record.text)
+        return 0
+    else:
+        return b1_record.json().get("results", [])
+
+
 @click.command()
 @click.option(
     "-c", "--config", default="~/b1ddi/b1config.ini", help="bloxone ddi config file"
@@ -22,16 +31,7 @@ def main(config: str, get: bool):
         tenant_records = get_record(b1)
         if tenant_records:
             for r in tenant_records:
-                print(r)
-
-
-def get_record(b1):
-    b1_record = b1.get("/dns/record")
-    if b1_record.status_code != 200:
-        print(b1_record.status_code, b1_record.text)
-    else:
-        uddi_records = b1_record.json()
-        return uddi_records
+                print(r["dns_absolute_name_spec"])
 
 
 if __name__ == "__main__":
