@@ -112,7 +112,6 @@ def collect_nios_record_count(wapi, nios, b1, verify):
                     if "ptrdname" in r:
                         verified = verify_nios_uddi(b1, r["ptrdname"])
                     else:
-                        print(r["name"])
                         verified = verify_nios_uddi(b1, r["name"])
                     if verified == 1:
                         progress.update(verified_task, advance=1)
@@ -123,12 +122,15 @@ def collect_nios_record_count(wapi, nios, b1, verify):
                             missing_records.append(r["name"])
                         progress.update(missing_task, advance=1)
                     nios_in_uddi += verified
-            print(f"Total {nios} verified: {nios_in_uddi}")
+            with open("missing_records.txt", "a") as f:
+                print(missing_records, file=f)
+            print(f"Total {nios} verified: {len(nios_count.json().get('result'))}")
             print(
                 f'UDDI Count: {nios_in_uddi} NIOS Count: {len(nios_count.json().get("result"))}'
             )
-            with open("missing.txt", "a") as f:
-                print(missing_records, file=f)
+            if len(missing_records) > 0:
+                print(f"Missing {nios} records: {len(missing_records)}")
+                print("Review missing_records.txt file")
     return len(nios_count.json().get("result"))
 
 
@@ -142,6 +144,9 @@ def verify_nios_uddi(b1, hostname):
     record = record_verify.json()
     results = record.get("results", [])
     if results:
+        for r in results:
+            with open("verified_records.txt", "a") as f:
+                print(f"{hostname}, {r["id"]}, {r["created_at"]}", file=f)
         return 1
     return 0
 
