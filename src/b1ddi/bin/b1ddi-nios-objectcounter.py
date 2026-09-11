@@ -56,7 +56,10 @@ def connect_uddi(config):
     customer = b1p.get_current_tenant()
     b1 = bloxone.b1ddi(config)
     if customer:
-        console.print(f"Connected to Tenant: [white]{customer}[/white]")
+        console.print(
+            f"    [bright_green]BloxOne[/] [white]Platform[/]: [bright white]{customer}[/bright white]"
+        )
+        console.print("[bright_green]Connected to BloxOne[/]")
     return b1
 
 
@@ -100,20 +103,24 @@ def collect_nios_record_count(wapi, nios, b1, verify):
 
 def verify_nios_uddi(b1, hostname):
     # period is needed at the end of the hostname. UDDI requires it and NIOS does not return one
-    record_verify = b1.get(
-        "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
-    )
-    if record_verify.status_code != 200:
-        print(f"{hostname}: {record_verify.status_code} : {record_verify.text}")
+    try:
+        record_verify = b1.get(
+            "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
+        )
+        if record_verify.status_code != 200:
+            print(f"{hostname}: {record_verify.status_code} : {record_verify.text}")
+            return 0
+        record = record_verify.json()
+        results = record.get("results", [])
+        if results:
+            for r in results:
+                with open("verified_records.txt", "a") as f:
+                    print(f"{hostname}, {r["id"]}, {r["created_at"]}", file=f)
+            return 1
         return 0
-    record = record_verify.json()
-    results = record.get("results", [])
-    if results:
-        for r in results:
-            with open("verified_records.txt", "a") as f:
-                print(f"{hostname}, {r["id"]}, {r["created_at"]}", file=f)
-        return 1
-    return 0
+    except Exception as e:
+        print(f"Error verifying {hostname}: {e}")
+        return 0
 
 
 def uddi_verify_process(b1, nios, nios_count):
