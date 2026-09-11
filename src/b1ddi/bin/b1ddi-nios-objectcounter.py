@@ -7,7 +7,7 @@ import click
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
 from rich.console import Console
-from rich.progress import Progress
+from rich.progress import Progress, TextColumn, SpinnerColumn
 
 console = Console()
 wapi = Gift()
@@ -96,43 +96,52 @@ def collect_nios_record_count(wapi, nios, b1, verify):
         if verify:
             missing_records = []
             nios_in_uddi = 0
-            with Progress() as progress:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("{task.completed}"),
+                *Progress.get_default_columns(),
+            ) as progress:
                 count_task = progress.add_task(
-                    "[white]Verificaton Progress",
+                    "[white]UDDI Verificaton Progress",
                     total=len(nios_count.json().get("result")),
                 )
-                missing_task = progress.add_task("[red]Missing", total=None)
                 verified_task = progress.add_task("[green]Verified", total=None)
+                missing_task = progress.add_task("[red]Missing", total=None)
                 for r in nios_count.json().get("result"):
                     progress.update(count_task, advance=1)
                     if "ptrdname" in r:
                         verified = verify_nios_uddi(b1, r["ptrdname"])
                     else:
+                        print(r["name"])
                         verified = verify_nios_uddi(b1, r["name"])
                     if verified == 1:
                         progress.update(verified_task, advance=1)
                     else:
-                        missing_records.append(r)
+                        if "ptrdname" in r:
+                            missing_records.append(r["ptrdname"])
+                        else:
+                            missing_records.append(r["name"])
                         progress.update(missing_task, advance=1)
                     nios_in_uddi += verified
             print(f"Total {nios} verified: {nios_in_uddi}")
             print(
-                f'UDDI Count: {nios_in_uddi} NIOS Count{len(nios_count.json().get("result"))}'
+                f'UDDI Count: {nios_in_uddi} NIOS Count: {len(nios_count.json().get("result"))}'
             )
-            with open("missing.txt", "w") as f:
+            with open("missing.txt", "a") as f:
                 print(missing_records, file=f)
     return len(nios_count.json().get("result"))
 
 
 def verify_nios_uddi(b1, hostname):
     record_verify = b1.get(
-        "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}'"
+        "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
     )
     if record_verify.status_code != 200:
-        print(f"{record_verify.status_code} : {record_verify.text}")
-    else:
-        for r in record_verify.json().get("results"):
-            print(r)
+        print(f"{hostname}: {record_verify.status_code} : {record_verify.text}")
+        return 0
+    record = record_verify.json()
+    results = record.get("results", [])
+    if results:
         return 1
     return 0
 
