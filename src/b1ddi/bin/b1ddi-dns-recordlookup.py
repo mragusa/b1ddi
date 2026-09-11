@@ -32,7 +32,7 @@ def main(config: str, hostname: str, raw: bool, simple: bool, pretty: bool):
     )
     b1 = bloxone.b1ddi(config)
     b1_id = b1.get_id(
-        "/dns/record", key="name_in_zone", value=hostname, include_path=False
+        "/dns/record", key="dns_absolute_name_spec", value=hostname, include_path=False
     )
     if b1_id:
         b1_record = b1.get("/dns/record", id=b1_id)
