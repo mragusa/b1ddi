@@ -57,7 +57,7 @@ def connect_uddi(config):
     b1 = bloxone.b1ddi(config)
     if customer:
         console.print(
-            f"    [bright_green]BloxOne[/] [white]Platform[/]: [bright white]{customer}[/bright white]"
+            f"[bright_green]BloxOne[/] [white]Platform[/]: [bright white]{customer}[/bright white]"
         )
         console.print("[bright_green]Connected to BloxOne[/]")
     return b1
