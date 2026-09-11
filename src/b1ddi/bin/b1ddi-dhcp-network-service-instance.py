@@ -57,7 +57,7 @@ def get_range(b1, parent):
         return None
 
 
-def process_file(b1, file):
+def process_file(b1, file, update, dryrun):
     subnet_ha_groups = {}
     if file:
         with open(file, newline="\n") as csvfile:
@@ -76,11 +76,21 @@ def process_file(b1, file):
                         net[0], sub_id, net[1], subnet_ha_groups[net[1]]
                     )
                 )
-                update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
+                if update:
+                    update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
+                if dryrun:
+                    print(
+                        f"Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
+                    )
                 if ran_id:
                     print("Range: {}".format(ran_id))
                     print("Updating DHCP Range")
-                    update_range(b1, ran_id, subnet_ha_groups[net[1]])
+                    if update:
+                        update_range(b1, ran_id, subnet_ha_groups[net[1]])
+                    if dryrun:
+                        print(
+                            f"Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
+                        )
     else:
         print("CSV Input File Missing")
 
@@ -147,10 +157,18 @@ def update_range(b1, range_id, ha_group_id):
     "-u",
     "--update",
     is_flag=True,
+    show_default=True,
     help="Update subnet and service assignment from CSV import file",
 )
+@click.option(
+    "-d",
+    "--dryrun",
+    is_flag=True,
+    show_default=True,
+    help="Dryrun subnet and service assignment updates from CSV import file",
+)
 @click.option("-f", "--file", default="~/import.csv", help="CSV Input File")
-def main(config: str, get: bool, file: str, update: bool):
+def main(config: str, get: bool, file: str, update: bool, dryrun: bool):
     """This tool will retreive all current subnets and associated dhcp ranges assigned to a UDDI tenant and display their current service instance assignment
 
     If a file is used with the update flag, all subnets and their corresponding dhcp ranges will be updated to the provided HA group.
@@ -164,8 +182,8 @@ def main(config: str, get: bool, file: str, update: bool):
     b1 = bloxone.b1ddi(config)
     if get:
         get_subnet(b1)
-    if update:
-        process_file(b1, file)
+    if update or dryrun:
+        process_file(b1, file, update, dryrun)
 
 
 if __name__ == "__main__":
