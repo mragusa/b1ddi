@@ -4,6 +4,8 @@ import sys
 import getpass
 import bloxone
 import click
+import threading
+import concurrent.futures
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
 from rich.console import Console
@@ -91,110 +93,159 @@ def collect_uddi_record_count(b1, uddi):
     return record_count
 
 
-def collect_nios_record_count(wapi, nios, b1, verify):
+def collect_nios_record_count(wapi, nios, b1, verify, threads):
     nios_count = wapi.get(nios, params={"_max_results": 100000, "_return_as_object": 1})
     if nios_count.status_code != 200:
         print(f"NIOS Error: {nios_count.status_code} : {nios_count.text}")
-    else:
-        if verify:
-            uddi_verify_process(b1, nios, nios_count)
-    return len(nios_count.json().get("result"))
+        return 0
+
+    # Extract results array safely
+    results = nios_count.json().get("result", [])
+
+    if verify and results:
+        uddi_verify_process(b1, nios, results, threads)
+
+    return len(results)
 
 
 def verify_nios_uddi(b1, hostname):
-    # period is needed at the end of the hostname. UDDI requires it and NIOS does not return one
+    """Performs the network lookups. Keeps file and list manipulation out of here."""
     try:
         record_verify = b1.get(
             "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
         )
         if record_verify.status_code != 200:
             print(f"{hostname}: {record_verify.status_code} : {record_verify.text}")
-            return 0
-        record = record_verify.json()
-        results = record.get("results", [])
+            return False, []
+
+        results = record_verify.json().get("results", [])
         if results:
-            for r in results:
-                with open("verified_records.txt", "a") as f:
-                    print(f"{hostname}, {r["id"]}, {r["created_at"]}", file=f)
-            return 1
-        return 0
+            # Pass matched record metadata back up to be safely saved under thread lock
+            records_metadata = [
+                f"{hostname}, {r['id']}, {r['created_at']}" for r in results
+            ]
+            return True, records_metadata
+
+        return False, []
     except Exception as e:
         print(f"Error verifying {hostname}: {e}")
-        return 0
+        return False, []
 
 
-def uddi_verify_process(b1, nios, nios_count):
+def uddi_verify_process(b1, nios, results_list, threads):
     missing_records = []
+    verified_records_buffer = []
     nios_in_uddi = 0
+    total_records = len(results_list)
+
+    # Thread locks to secure concurrent updates
+    ui_and_data_lock = threading.Lock()
+
     with Progress(
         SpinnerColumn(),
         TextColumn("{task.completed}"),
         *Progress.get_default_columns(),
     ) as progress:
+
         count_task = progress.add_task(
-            "[white]UDDI Verificaton Progress",
-            total=len(nios_count.json().get("result")),
+            "[white]UDDI Verification Progress", total=total_records
         )
         verified_task = progress.add_task("[green]Verified", total=None)
         missing_task = progress.add_task("[red]Missing", total=None)
-        for r in nios_count.json().get("result"):
-            progress.update(count_task, advance=1)
-            if "ptrdname" in r:
-                verified = verify_nios_uddi(b1, r["ptrdname"])
-            else:
-                verified = verify_nios_uddi(b1, r["name"])
-            if verified == 1:
-                progress.update(verified_task, advance=1)
-            else:
-                if "ptrdname" in r:
-                    missing_records.append(r["ptrdname"])
+
+        def worker(r):
+            nonlocal nios_in_uddi
+
+            # Determine correct lookup string
+            target_name = r["ptrdname"] if "ptrdname" in r else r["name"]
+
+            # 1. Thread-safe execution of network tasks (runs fully parallelized)
+            is_verified, metadata_lines = verify_nios_uddi(b1, target_name)
+
+            # 2. Safely synchronize list appending and UI stats
+            with ui_and_data_lock:
+                progress.update(count_task, advance=1)
+
+                if is_verified:
+                    nios_in_uddi += 1
+                    verified_records_buffer.extend(metadata_lines)
+                    progress.update(verified_task, advance=1)
                 else:
-                    missing_records.append(f'{r["name"]}, {nios}')
-                progress.update(missing_task, advance=1)
-            nios_in_uddi += verified
-    with open("missing_records.txt", "a") as f:
-        print(missing_records, file=f)
-    print(f"Total {nios} verified: {len(nios_count.json().get('result'))}")
-    print(
-        f'UDDI Count: {nios_in_uddi} NIOS Count: {len(nios_count.json().get("result"))}'
-    )
-    if len(missing_records) > 0:
+                    if "ptrdname" in r:
+                        missing_records.append(r["ptrdname"])
+                    else:
+                        missing_records.append(f'{r["name"]}, {nios}')
+                    progress.update(missing_task, advance=1)
+
+        # 3. Handle processing with 50 background workers max
+        with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = [executor.submit(worker, r) for r in results_list]
+            concurrent.futures.wait(futures)
+
+    # 4. Safe Batch File Operations (Happens once outside loops)
+    if verified_records_buffer:
+        with open("verified_records.txt", "a") as f:
+            f.write("\n".join(verified_records_buffer) + "\n")
+
+    if missing_records:
+        with open("missing_records.txt", "a") as f:
+            f.write("\n".join(missing_records) + "\n")
+
+    # Summary Output
+    print(f"Total {nios} verified: {total_records}")
+    print(f"UDDI Count: {nios_in_uddi} NIOS Count: {total_records}")
+    if missing_records:
         print(f"Missing {nios} records: {len(missing_records)}")
         print("Review missing_records.txt file")
 
 
 @click.command()
 @click.option(
-    "-c", "--config", default="~/b1ddi/b1config.ini", help="BloxOne UDDI Config File"
+    "-c",
+    "--config",
+    default="~/b1ddi/b1config.ini",
+    show_default=True,
+    required=True,
+    help="BloxOne UDDI Config File",
 )
+@click.option("-g", "--grid-mgr", required=True, help="Infoblox Grid Manager")
 @click.option(
     "-u",
     "--username",
     default="admin",
     show_default=True,
-    help="Infoblox admin username",
+    help="Infoblox Admin Username",
 )
-@click.option("-g", "--grid-mgr", required=True, help="Infoblox Grid Manager")
 @click.option(
     "-w",
     "--wapi-ver",
-    default="2.13.7",
+    default="2.13.8",
     show_default=True,
-    help="Infoblox WAPI version",
+    help="Infoblox WAPI Version",
 )
 @click.option(
     "--verify",
     is_flag=True,
     default=False,
+    show_default=True,
     help="Verify NIOS records exist in BloxOne DDI",
 )
-def main(config: str, grid_mgr: str, wapi_ver: str, username: str, verify: bool):
+@click.option(
+    "-m",
+    "--threads",
+    default=25,
+    show_default=True,
+    help="Number of threads to use for verification",
+)
+def main(
+    config: str, grid_mgr: str, wapi_ver: str, username: str, verify: bool, threads: int
+):
     """Compare Record Object Counts between BloxOne DDI and NIOS\nVerify NIOS records in UDDI and display missing records"""
     b1 = connect_uddi(config)
     wapi = connect_nios(grid_mgr, username, wapi_ver)
     for uddi, nios in zip(uddi_record_types, nios_record_types):
         uddi_count = collect_uddi_record_count(b1, uddi)
-        nios_count = collect_nios_record_count(wapi, nios, b1, verify)
+        nios_count = collect_nios_record_count(wapi, nios, b1, verify, threads)
         print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
 
 
