@@ -27,9 +27,7 @@ from rich.table import Table
     "-u", "--update", is_flag=True, help="Update BloxOne Hosts and Services"
 )
 @optgroup.group("BloxOne Services")
-@optgroup.option(
-    "--services", is_flag=True, help="Create / Update BloxOne Services"
-)
+@optgroup.option("--services", is_flag=True, help="Create / Update BloxOne Services")
 @optgroup.option("-n", "--new", is_flag=True, help="Create BloxOne Service Resource")
 @optgroup.group("Host and Service Options")
 @optgroup.option("--name", help="BloxOne Host or Service Name")
@@ -43,11 +41,7 @@ from rich.table import Table
 @optgroup.option(
     "--servicetype",
     type=click.Choice(
-        [
-            "dns",
-            "dhcp",
-            "ntp"
-        ],
+        ["dns", "dhcp", "ntp"],
         case_sensitive=True,
     ),
 )
@@ -162,7 +156,7 @@ def get_b1_hostname(b1infra, id):
         print(response.status_code, response.text)
 
 
-def create_service_resource(b1infra, name, servicetype, poolid, commenti, desiredstate):
+def create_service_resource(b1infra, name, servicetype, poolid, comment, desiredstate):
     b1ServiceBody = {
         "name": name,
         "service_type": servicetype,
