@@ -13,6 +13,7 @@ import click
 from click_option_group import optgroup
 import smtplib
 import ssl
+import getpass
 
 
 @click.command()
@@ -311,6 +312,8 @@ def send_mail_report(server, sender, receipients, subject, automated_report):
     smtp_server = server
     sender_email = sender
     receiver_email = ",".join(receipients)
+    port = 25
+    password = getpass.getpass("Enter mail password")
     message = "Subject: {} \nNamed List Updates \n{}".format(subject, automated_report)
 
     ssl_context = ssl.create_default_context()
