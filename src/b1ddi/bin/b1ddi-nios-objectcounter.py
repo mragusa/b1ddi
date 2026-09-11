@@ -94,47 +94,12 @@ def collect_nios_record_count(wapi, nios, b1, verify):
         print(f"NIOS Error: {nios_count.status_code} : {nios_count.text}")
     else:
         if verify:
-            missing_records = []
-            nios_in_uddi = 0
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("{task.completed}"),
-                *Progress.get_default_columns(),
-            ) as progress:
-                count_task = progress.add_task(
-                    "[white]UDDI Verificaton Progress",
-                    total=len(nios_count.json().get("result")),
-                )
-                verified_task = progress.add_task("[green]Verified", total=None)
-                missing_task = progress.add_task("[red]Missing", total=None)
-                for r in nios_count.json().get("result"):
-                    progress.update(count_task, advance=1)
-                    if "ptrdname" in r:
-                        verified = verify_nios_uddi(b1, r["ptrdname"])
-                    else:
-                        verified = verify_nios_uddi(b1, r["name"])
-                    if verified == 1:
-                        progress.update(verified_task, advance=1)
-                    else:
-                        if "ptrdname" in r:
-                            missing_records.append(r["ptrdname"])
-                        else:
-                            missing_records.append(r["name"])
-                        progress.update(missing_task, advance=1)
-                    nios_in_uddi += verified
-            with open("missing_records.txt", "a") as f:
-                print(missing_records, file=f)
-            print(f"Total {nios} verified: {len(nios_count.json().get('result'))}")
-            print(
-                f'UDDI Count: {nios_in_uddi} NIOS Count: {len(nios_count.json().get("result"))}'
-            )
-            if len(missing_records) > 0:
-                print(f"Missing {nios} records: {len(missing_records)}")
-                print("Review missing_records.txt file")
+            uddi_verify_process(b1, nios, nios_count)
     return len(nios_count.json().get("result"))
 
 
 def verify_nios_uddi(b1, hostname):
+    # period is needed at the end of the hostname. UDDI requires it and NIOS does not return one
     record_verify = b1.get(
         "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
     )
@@ -149,6 +114,46 @@ def verify_nios_uddi(b1, hostname):
                 print(f"{hostname}, {r["id"]}, {r["created_at"]}", file=f)
         return 1
     return 0
+
+
+def uddi_verify_process(b1, nios, nios_count):
+    missing_records = []
+    nios_in_uddi = 0
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("{task.completed}"),
+        *Progress.get_default_columns(),
+    ) as progress:
+        count_task = progress.add_task(
+            "[white]UDDI Verificaton Progress",
+            total=len(nios_count.json().get("result")),
+        )
+        verified_task = progress.add_task("[green]Verified", total=None)
+        missing_task = progress.add_task("[red]Missing", total=None)
+        for r in nios_count.json().get("result"):
+            progress.update(count_task, advance=1)
+            if "ptrdname" in r:
+                verified = verify_nios_uddi(b1, r["ptrdname"])
+            else:
+                verified = verify_nios_uddi(b1, r["name"])
+            if verified == 1:
+                progress.update(verified_task, advance=1)
+            else:
+                if "ptrdname" in r:
+                    missing_records.append(r["ptrdname"])
+                else:
+                    missing_records.append(f'{r["name"]}, {nios}')
+                progress.update(missing_task, advance=1)
+            nios_in_uddi += verified
+    with open("missing_records.txt", "a") as f:
+        print(missing_records, file=f)
+    print(f"Total {nios} verified: {len(nios_count.json().get('result'))}")
+    print(
+        f'UDDI Count: {nios_in_uddi} NIOS Count: {len(nios_count.json().get("result"))}'
+    )
+    if len(missing_records) > 0:
+        print(f"Missing {nios} records: {len(missing_records)}")
+        print("Review missing_records.txt file")
 
 
 @click.command()
