@@ -27,8 +27,8 @@ uddi_record_types = [
     "MX",
     "NAPTR",
     "NS",
-    "PTR",
     "SRV",
+    "PTR",
     "SVCB",
     "TXT",
 ]
@@ -46,8 +46,8 @@ nios_record_types = [
     "record:mx",
     "record:naptr",
     "record:ns",
-    "record:ptr",
     "record:srv",
+    "record:ptr",
     "record:svcb",
     "record:txt",
 ]
@@ -219,7 +219,7 @@ def uddi_verify_process(b1, nios, results_list, threads):
 @click.option(
     "-w",
     "--wapi-ver",
-    default="2.13.8",
+    default="2.13.7",
     show_default=True,
     help="Infoblox WAPI Version",
 )
