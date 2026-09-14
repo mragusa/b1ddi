@@ -12,73 +12,6 @@ from rich.table import Table
 # Add ability to delete services
 
 
-@click.command()
-@optgroup.group("BloxOne Configuration file")
-@optgroup.option(
-    "-c", "--config", default="b1config.ini", help="BloxOne Configuration File"
-)
-@optgroup.group("BloxOne Host Services Actions")
-@optgroup.option(
-    "-g", "--get", is_flag=True, help="Retreive BloxOne Hosts and Services"
-)
-@optgroup.group("BloxOne Hosts")
-@optgroup.option("--hosts", is_flag=True, help="Create / Update BloxOne Hosts")
-@optgroup.option(
-    "-u", "--update", is_flag=True, help="Update BloxOne Hosts and Services"
-)
-@optgroup.group("BloxOne Services")
-@optgroup.option("--services", is_flag=True, help="Create / Update BloxOne Services")
-@optgroup.option("-n", "--new", is_flag=True, help="Create BloxOne Service Resource")
-@optgroup.group("Host and Service Options")
-@optgroup.option("--name", help="BloxOne Host or Service Name")
-@optgroup.option("--id", help="BloxOne Host ID")
-@optgroup.option("--poolid", help="BloxOne Host Pool ID")
-@optgroup.option("--ipspace", help="IP Space ID")
-@optgroup.option(
-    "--comment", default="Script API Testing", help="Comment for Host or Service"
-)
-@optgroup.group(" Service Options")
-@optgroup.option(
-    "--servicetype",
-    type=click.Choice(
-        ["dns", "dhcp", "ntp"],
-        case_sensitive=True,
-    ),
-)
-@optgroup.group("Start or Stop Services")
-@optgroup.option(
-    "--desiredstate",
-    type=click.Choice(["start", "stop"], case_sensitive=True),
-    help="Start or Stop Service on Creation",
-)
-def main(
-    config,
-    get,
-    hosts,
-    services,
-    new,
-    update,
-    name,
-    id,
-    poolid,
-    ipspace,
-    servicetype,
-    desiredstate,
-    comment,
-):
-    b1infra = bloxone.b1infra(config)
-    if get:
-        get_b1_hosts(b1infra)
-    if hosts and update:
-        update_b1_host(b1infra, id, poolid, name, ipspace)
-    if services and new:
-        create_service_resource(
-            b1infra, name, servicetype, poolid, comment, desiredstate
-        )
-    if services and desiredstate:
-        start_stop_service(b1infra, id, name, servicetype, poolid, desiredstate)
-
-
 def get_b1_hosts(b1infra):
     response = b1infra.b1_hosts()
     if response.status_code == 200:
@@ -194,6 +127,73 @@ def start_stop_service(b1infra, id, name, servicetype, poolid, desiredstate):
         get_b1_hosts(b1infra)
     else:
         print(response.status_code, response.text)
+
+
+@click.command()
+@optgroup.group("BloxOne Configuration file")
+@optgroup.option(
+    "-c", "--config", default="b1config.ini", help="BloxOne Configuration File"
+)
+@optgroup.group("BloxOne Host Services Actions")
+@optgroup.option(
+    "-g", "--get", is_flag=True, help="Retreive BloxOne Hosts and Services"
+)
+@optgroup.group("BloxOne Hosts")
+@optgroup.option("--hosts", is_flag=True, help="Create / Update BloxOne Hosts")
+@optgroup.option(
+    "-u", "--update", is_flag=True, help="Update BloxOne Hosts and Services"
+)
+@optgroup.group("BloxOne Services")
+@optgroup.option("--services", is_flag=True, help="Create / Update BloxOne Services")
+@optgroup.option("-n", "--new", is_flag=True, help="Create BloxOne Service Resource")
+@optgroup.group("Host and Service Options")
+@optgroup.option("--name", help="BloxOne Host or Service Name")
+@optgroup.option("--id", help="BloxOne Host ID")
+@optgroup.option("--poolid", help="BloxOne Host Pool ID")
+@optgroup.option("--ipspace", help="IP Space ID")
+@optgroup.option(
+    "--comment", default="Script API Testing", help="Comment for Host or Service"
+)
+@optgroup.group(" Service Options")
+@optgroup.option(
+    "--servicetype",
+    type=click.Choice(
+        ["dns", "dhcp", "ntp"],
+        case_sensitive=True,
+    ),
+)
+@optgroup.group("Start or Stop Services")
+@optgroup.option(
+    "--desiredstate",
+    type=click.Choice(["start", "stop"], case_sensitive=True),
+    help="Start or Stop Service on Creation",
+)
+def main(
+    config,
+    get,
+    hosts,
+    services,
+    new,
+    update,
+    name,
+    id,
+    poolid,
+    ipspace,
+    servicetype,
+    desiredstate,
+    comment,
+):
+    b1infra = bloxone.b1infra(config)
+    if get:
+        get_b1_hosts(b1infra)
+    if hosts and update:
+        update_b1_host(b1infra, id, poolid, name, ipspace)
+    if services and new:
+        create_service_resource(
+            b1infra, name, servicetype, poolid, comment, desiredstate
+        )
+    if services and desiredstate:
+        start_stop_service(b1infra, id, name, servicetype, poolid, desiredstate)
 
 
 if __name__ == "__main__":
