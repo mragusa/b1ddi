@@ -57,7 +57,7 @@ def get_range(b1, parent):
         return None
 
 
-def process_file(b1, file, update, dryrun):
+def process_file(b1, file, update, dryrun, config):
     subnet_ha_groups = {}
     if file:
         with open(file, newline="\n") as csvfile:
@@ -70,12 +70,17 @@ def process_file(b1, file, update, dryrun):
                 # Populate dictionary with ha id to reduce lookups against cloud api
                 if net[1] not in subnet_ha_groups:
                     ha_id = get_ha_id(b1, net[1])
-                    subnet_ha_groups[net[1]] = ha_id
-                print(
-                    "Network: {} Subnet ID: {} HA Group: {} HA ID: {}".format(
-                        net[0], sub_id, net[1], subnet_ha_groups[net[1]]
-                    )
-                )
+                    if ha_id:
+                        subnet_ha_groups[net[1]] = ha_id
+                    else:
+                        # Check if service instance
+                        service_instance_id = get_service_id(config, net[1])
+                        if service_instance_id:
+                            subnet_ha_groups[net[1]] = service_instance_id
+                        else:
+                            subnet_ha_groups[net[1]] = "None"
+                print(f"Network: {net[0]} Subnet ID: {sub_id}")
+                print(f"HA Group: {net[1]} HA ID: {subnet_ha_groups[net[1]]}")
                 if update:
                     update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
                 if dryrun:
@@ -83,21 +88,16 @@ def process_file(b1, file, update, dryrun):
                         f"Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
                     )
                 if ran_id:
-                    print("Range: {}".format(ran_id))
-                    print("Updating DHCP Range")
+                    print(f"Range ID: {ran_id}")
                     if update:
                         update_range(b1, ran_id, subnet_ha_groups[net[1]])
                     if dryrun:
                         print(
                             f"Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
                         )
+                print()
     else:
         print("CSV Input File Missing")
-
-
-def get_ha_id(b1, ha_group):
-    ha_id = b1.get_id("/dhcp/ha_group", key="name", value=ha_group, include_path=True)
-    return ha_id
 
 
 def get_ha_name(b1, srv_id):
@@ -122,6 +122,19 @@ def get_subnet_id(b1, address):
 def get_range_id(b1, parent):
     range_id = b1.get_id("/ipam/range", key="parent", value=parent)
     return range_id
+
+
+def get_ha_id(b1, ha_group):
+    ha_id = b1.get_id("/dhcp/ha_group", key="name", value=ha_group, include_path=True)
+    return ha_id
+
+
+def get_service_id(config, service_name):
+    b1 = bloxone.b1infra(config)
+    service_id = b1.get_id(
+        "/services", key="name", value=service_name, include_path=True
+    )
+    return service_id
 
 
 def update_subnet(b1, subnet_id, ha_group_id):
@@ -183,7 +196,7 @@ def main(config: str, get: bool, file: str, update: bool, dryrun: bool):
     if get:
         get_subnet(b1)
     if update or dryrun:
-        process_file(b1, file, update, dryrun)
+        process_file(b1, file, update, dryrun, config)
 
 
 if __name__ == "__main__":
