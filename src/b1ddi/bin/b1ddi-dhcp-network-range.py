@@ -23,15 +23,9 @@ def get_uddi_subnets(b1):
 @click.option(
     "-c", "--config", default="~/b1ddi/b1config.ini", help="bloxone ddi config file"
 )
-@click.option(
-    "-g",
-    "--get",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Retrieve DNS views",
-)
-def main(config: str, get: bool):
+def main(
+    config: str,
+):
     total_networks = 0
     subnet_with_range = []
     subnet_with_range_count = 0
