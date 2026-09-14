@@ -89,7 +89,7 @@ def report_group_table(customer, uddi_groups):
     group_users = []
     table = Table(
         "Name",
-        "Description",
+        Column("Description", no_wrap=True),
         "Group ID",
         "Created",
         "Updated",
