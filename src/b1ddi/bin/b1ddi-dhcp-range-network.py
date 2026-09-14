@@ -27,7 +27,12 @@ def get_subnet_address(b1, subnet_id):
 )
 @click.option("-f", "--file", help="DHCP Range Input File")
 def main(config: str, file: str):
-    """Example Infoblox UDDI python script"""
+    """Find UDDI Subnets from DHCP Range Start Octets
+    Input file:
+    header, DHCP Member, start, end
+    range, Test, 10.0.0.10, 10.0.0.100
+    Print output can be used by b1ddi-dhcp-network-service-instance.py to change member assignment
+    """
     b1 = bloxone.b1ddi(config)
     if file:
         with open(file, newline="") as csvfile:
