@@ -82,7 +82,7 @@ def main(
 def get_b1_hosts(b1infra):
     response = b1infra.b1_hosts()
     if response.status_code == 200:
-        hosts = response.json()
+        hosts = response.json().get("results")
         hTable = Table(
             "Name", "ID", "IP Address", "IP Space", "Pool ID", title="BloxOne Hosts"
         )
@@ -93,7 +93,7 @@ def get_b1_hosts(b1infra):
             "Service Type",
             title="BloxOne Host Service Assignment",
         )
-        for x in hosts["results"]:
+        for x in hosts:
             if "ip_space" not in x:
                 x["ip_space"] = "None"
             hTable.add_row(
@@ -150,8 +150,10 @@ def get_b1_services(b1infra):
 def get_b1_hostname(b1infra, id):
     response = b1infra.get("/hosts", id=id)
     if response.status_code == 200:
-        b1_name = response.json()
-        return b1_name["result"]["display_name"]
+        if response.json().get("result"):
+            return response.json().get("result").get("display_name")
+        else:
+            return "None"
     else:
         print(response.status_code, response.text)
 
