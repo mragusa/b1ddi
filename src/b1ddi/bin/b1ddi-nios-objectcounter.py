@@ -88,11 +88,6 @@ def collect_uddi_record_count(b1, uddi):
     offset = 0
 
     while True:
-        print(
-            f"{uddi}: Requesting records at offset {offset}",
-            flush=True,
-        )
-
         # Retry the same page if rate-limited.
         for attempt in range(5):
             response = b1.get(
@@ -150,11 +145,6 @@ def collect_uddi_record_count(b1, uddi):
         page_count = len(results)
         record_count += page_count
 
-        # print(
-        #    f"{uddi}: Retrieved {page_count} records. " f"Total: {record_count}",
-        #    flush=True,
-        # )
-
         # Exit the OUTER while loop when no records remain.
         if page_count == 0:
             break
@@ -206,7 +196,6 @@ def verify_nios_uddi(b1, hostname, type):
                 f"{hostname}, {r['id']}, {r['created_at']}" for r in results
             ]
             return True, records_metadata
-
         return False, []
     except Exception as e:
         print(f"Error verifying {hostname}: {e}")
@@ -229,7 +218,7 @@ def uddi_verify_process(b1, nios, results_list, threads):
     ) as progress:
 
         count_task = progress.add_task(
-            "[white]UDDI Verification Progress", total=total_records
+            f"[white]UDDI {nios} Verification Progress", total=total_records
         )
         verified_task = progress.add_task("[green]Verified", total=None)
         missing_task = progress.add_task("[red]Missing", total=None)
@@ -279,11 +268,6 @@ def uddi_verify_process(b1, nios, results_list, threads):
         )
     else:
         tableRecords.add_row(str(nios_in_uddi), str(total_records), nios, "None")
-    # print(f"Total {nios} verified: {total_records}")
-    # print(f"UDDI Count: {nios_in_uddi} NIOS Count: {total_records}")
-    # if missing_records:
-    #   print(f"Missing {nios} records: {len(missing_records)}")
-    #   print("Review missing_records.txt file")
 
 
 @click.command()
