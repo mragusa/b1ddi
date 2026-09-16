@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import time
 import getpass
 import bloxone
 import click
@@ -9,9 +10,11 @@ import concurrent.futures
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
 from rich.console import Console
+from rich.table import Table
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
 console = Console()
+tableRecords = Table("UDDI", "NIOS", "Type", "Missing", title="UDDI/NIOS Object Count")
 wapi = Gift()
 
 uddi_record_types = [
@@ -82,14 +85,86 @@ def connect_nios(grid_mgr, username, wapi_ver):
 
 def collect_uddi_record_count(b1, uddi):
     record_count = 0
-    uddi_count = b1.get(
-        "/dns/record", _filter=f"type=='{uddi}'", _limit=1000, _offset=0
-    )
-    if uddi_count.status_code != 200:
-        print(f"UDDI Error http error {uddi_count.status_code} : {uddi_count.text}")
-    else:
-        for r in uddi_count.json().get("results", []):
-            record_count += len(r)
+    offset = 0
+
+    while True:
+        print(
+            f"{uddi}: Requesting records at offset {offset}",
+            flush=True,
+        )
+
+        # Retry the same page if rate-limited.
+        for attempt in range(5):
+            response = b1.get(
+                "/dns/record",
+                _filter=f'type=="{uddi}"',
+                _fields="id",
+                _limit=1000,
+                _offset=offset,
+            )
+
+            # Handle rate limiting.
+            if response.status_code == 429:
+                if attempt == 4:
+                    raise RuntimeError(
+                        f"UDDI rate limit exceeded after "
+                        f"5 attempts: {response.text}"
+                    )
+
+                retry_after = response.headers.get("Retry-After")
+
+                if retry_after and retry_after.isdigit():
+                    delay = int(retry_after)
+                else:
+                    delay = min(2**attempt, 30)
+
+                print(
+                    f"{uddi}: Rate limited. " f"Retrying in {delay}s",
+                    flush=True,
+                )
+
+                time.sleep(delay)
+                continue
+
+            # Handle other HTTP errors.
+            if response.status_code != 200:
+                raise RuntimeError(
+                    f"UDDI HTTP {response.status_code}: " f"{response.text}"
+                )
+
+            # Parse response.
+            data = response.json()
+
+            if not isinstance(data, dict) or not isinstance(data.get("results"), list):
+                raise ValueError(f"Unexpected UDDI response: {data}")
+
+            results = data["results"]
+
+            # Successfully retrieved this page.
+            break
+
+        else:
+            raise RuntimeError("UDDI retries exhausted")
+
+        # Count the records returned on this page.
+        page_count = len(results)
+        record_count += page_count
+
+        # print(
+        #    f"{uddi}: Retrieved {page_count} records. " f"Total: {record_count}",
+        #    flush=True,
+        # )
+
+        # Exit the OUTER while loop when no records remain.
+        if page_count == 0:
+            break
+
+        # Advance to the next page.
+        offset += page_count
+
+        # Reduce request frequency.
+        time.sleep(0.5)
+
     return record_count
 
 
@@ -108,12 +183,18 @@ def collect_nios_record_count(wapi, nios, b1, verify, threads):
     return len(results)
 
 
-def verify_nios_uddi(b1, hostname):
+def verify_nios_uddi(b1, hostname, type):
     """Performs the network lookups. Keeps file and list manipulation out of here."""
     try:
-        record_verify = b1.get(
-            "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
-        )
+        if type == "record:ptr":
+            record_verify = b1.get(
+                "/dns/record",
+                _filter=f"dns_rdata=='{hostname}.' and type=='PTR'",
+            )
+        else:
+            record_verify = b1.get(
+                "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
+            )
         if record_verify.status_code != 200:
             print(f"{hostname}: {record_verify.status_code} : {record_verify.text}")
             return False, []
@@ -160,7 +241,7 @@ def uddi_verify_process(b1, nios, results_list, threads):
             target_name = r["ptrdname"] if "ptrdname" in r else r["name"]
 
             # 1. Thread-safe execution of network tasks (runs fully parallelized)
-            is_verified, metadata_lines = verify_nios_uddi(b1, target_name)
+            is_verified, metadata_lines = verify_nios_uddi(b1, target_name, nios)
 
             # 2. Safely synchronize list appending and UI stats
             with ui_and_data_lock:
@@ -172,7 +253,7 @@ def uddi_verify_process(b1, nios, results_list, threads):
                     progress.update(verified_task, advance=1)
                 else:
                     if "ptrdname" in r:
-                        missing_records.append(r["ptrdname"])
+                        missing_records.append(f"{r["ptrdname"]}, {nios}")
                     else:
                         missing_records.append(f'{r["name"]}, {nios}')
                     progress.update(missing_task, advance=1)
@@ -192,11 +273,17 @@ def uddi_verify_process(b1, nios, results_list, threads):
             f.write("\n".join(missing_records) + "\n")
 
     # Summary Output
-    print(f"Total {nios} verified: {total_records}")
-    print(f"UDDI Count: {nios_in_uddi} NIOS Count: {total_records}")
     if missing_records:
-        print(f"Missing {nios} records: {len(missing_records)}")
-        print("Review missing_records.txt file")
+        tableRecords.add_row(
+            str(nios_in_uddi), str(total_records), nios, str("\n".join(missing_records))
+        )
+    else:
+        tableRecords.add_row(str(nios_in_uddi), str(total_records), nios, "None")
+    # print(f"Total {nios} verified: {total_records}")
+    # print(f"UDDI Count: {nios_in_uddi} NIOS Count: {total_records}")
+    # if missing_records:
+    #   print(f"Missing {nios} records: {len(missing_records)}")
+    #   print("Review missing_records.txt file")
 
 
 @click.command()
@@ -243,10 +330,14 @@ def main(
     """Compare Record Object Counts between BloxOne DDI and NIOS\nVerify NIOS records in UDDI and display missing records"""
     b1 = connect_uddi(config)
     wapi = connect_nios(grid_mgr, username, wapi_ver)
+    totalTable = Table("UDDI", "NIOS", title="Total Object Count")
     for uddi, nios in zip(uddi_record_types, nios_record_types):
         uddi_count = collect_uddi_record_count(b1, uddi)
         nios_count = collect_nios_record_count(wapi, nios, b1, verify, threads)
-        print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
+        # print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
+        totalTable.add_row(str(uddi_count), str(nios_count))
+    console.print(totalTable)
+    console.print(tableRecords)
 
 
 if __name__ == "__main__":
