@@ -58,6 +58,8 @@ def get_range(b1, parent):
 
 
 def process_file(b1, file, update, dryrun, config):
+    # TODO Create function for this giant mess
+    # TODO Clean up output
     subnet_ha_groups = {}
     if file:
         with open(file, newline="\n") as csvfile:
@@ -79,22 +81,30 @@ def process_file(b1, file, update, dryrun, config):
                             subnet_ha_groups[net[1]] = service_instance_id
                         else:
                             subnet_ha_groups[net[1]] = "None"
-                print(f"Network: {net[0]} Subnet ID: {sub_id}")
-                print(f"HA Group: {net[1]} HA ID: {subnet_ha_groups[net[1]]}")
-                if update:
-                    update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
-                if dryrun:
-                    print(
-                        f"Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
-                    )
-                if ran_id:
-                    print(f"Range ID: {ran_id}")
+                # Check if new instance assignment is different
+                subnet = b1.get("/ipam/subnet", id=sub_id)
+                if (
+                    subnet.json().get("result").get("dhcp_host")
+                    != subnet_ha_groups[net[1]]
+                ):
+                    print(f"Network: {net[0]} Subnet ID: {sub_id}")
+                    print(f"HA Group: {net[1]} HA ID: {subnet_ha_groups[net[1]]}")
                     if update:
-                        update_range(b1, ran_id, subnet_ha_groups[net[1]])
+                        update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
                     if dryrun:
                         print(
-                            f"Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
+                            f"Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
                         )
+                    if ran_id:
+                        print(f"Range ID: {ran_id}")
+                        if update:
+                            update_range(b1, ran_id, subnet_ha_groups[net[1]])
+                        if dryrun:
+                            print(
+                                f"Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
+                            )
+                else:
+                    print(f"{net[0]} does not need update")
                 print()
     else:
         print("CSV Input File Missing")
