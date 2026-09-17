@@ -4,64 +4,10 @@ import bloxone
 import click
 from prettytable import PrettyTable
 
-# TODO
-# Add Table for access_codes, app_approvals, block_approvals, category_filters, network_lists,
-#
-# FIX
-# adjust table for security_policies to allow rule content to print properly
-
-
-@click.command()
-@click.option("-c", "--config", default="b1config.ini", help="Path to b1config file")
-@click.option(
-    "-g",
-    "--get",
-    help="Bloxone Threat Defense Cloud Swagger Objects. Retreive the current configuration of the selected object",
-    type=click.Choice(
-        [
-            "access_codes",
-            "app_approvals",
-            "application_filters",
-            "block_approvals",
-            "category_filters",
-            "content_categories",
-            "internal_domain_lists",
-            # "named_lists",
-            "network_lists",
-            "pop_regions",
-            "security_policies",
-            "security_policy_rules",
-            "threat_feeds",
-        ],
-        case_sensitive=True,
-    ),
-)
-def main(config: str, get: str):
-    # B1TDC objects paths stored inside of a dictionary
-    b1tdc_objects = {
-        "access_codes": "/access_codes",
-        "app_approvals": "/app_approvals",
-        "application_filters": "/application_filters",
-        "block_approvals": "/block_approvals",
-        "category_filters": "/category_filters",
-        "content_categories": "/content_categories",
-        "internal_domain_lists": "/internal_domain_lists",
-        # "named_lists": "/named_lists",
-        "network_lists": "/network_lists",
-        "pop_regions": "/pop_regions",
-        "security_policies": "/security_policies",
-        "security_policy_rules": "/security_policy_rules",
-        "threat_feeds": "/threat_feeds",
-    }
-    # Retreive configu containing API key
-    b1tdc = bloxone.b1tdc(config)
-    b1tdc_response = b1tdc.get(b1tdc_objects[get])
-    if b1tdc_response.status_code == 200:
-        # b1_res = b1tdc_response.json()
-        print(b1_res["results"])
-        format_response(get, b1_res["results"])
-    else:
-        print(b1tdc_response.status_code, b1tdc_response.text)
+# TODO Add Table for access_codes, app_approvals, block_approvals, category_filters, network_lists,
+# TODO clean up format_response function
+# TODO change pretty table to rich table
+# FIX adjust table for security_policies to allow rule content to print properly
 
 
 def format_response(get_object, response):
@@ -223,6 +169,58 @@ def format_response(get_object, response):
                 ]
             )
     print(table)
+
+
+@click.command()
+@click.option("-c", "--config", default="b1config.ini", help="Path to b1config file")
+@click.option(
+    "-g",
+    "--get",
+    help="Bloxone Threat Defense Cloud Swagger Objects. Retreive the current configuration of the selected object",
+    type=click.Choice(
+        [
+            "access_codes",
+            "app_approvals",
+            "application_filters",
+            "block_approvals",
+            "category_filters",
+            "content_categories",
+            "internal_domain_lists",
+            # "named_lists",
+            "network_lists",
+            "pop_regions",
+            "security_policies",
+            "security_policy_rules",
+            "threat_feeds",
+        ],
+        case_sensitive=True,
+    ),
+)
+def main(config: str, get: str):
+    # B1TDC objects paths stored inside of a dictionary
+    b1tdc_objects = {
+        "access_codes": "/access_codes",
+        "app_approvals": "/app_approvals",
+        "application_filters": "/application_filters",
+        "block_approvals": "/block_approvals",
+        "category_filters": "/category_filters",
+        "content_categories": "/content_categories",
+        "internal_domain_lists": "/internal_domain_lists",
+        # "named_lists": "/named_lists",
+        "network_lists": "/network_lists",
+        "pop_regions": "/pop_regions",
+        "security_policies": "/security_policies",
+        "security_policy_rules": "/security_policy_rules",
+        "threat_feeds": "/threat_feeds",
+    }
+    # Retreive configu containing API key
+    b1tdc = bloxone.b1tdc(config)
+    b1tdc_response = b1tdc.get(b1tdc_objects[get])
+    if b1tdc_response.status_code == 200:
+        print(b1tdc_response.json().get(["results"]))
+        format_response(get, b1tdc_response.json().get(["results"]))
+    else:
+        print(b1tdc_response.status_code, b1tdc_response.text)
 
 
 if __name__ == "__main__":
