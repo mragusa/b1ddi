@@ -7,6 +7,7 @@ import bloxone
 import click
 import threading
 import concurrent.futures
+import logging
 from ibx_sdk.nios.exceptions import WapiRequestException
 from ibx_sdk.nios.gift import Gift
 from rich.console import Console
@@ -14,6 +15,8 @@ from rich.table import Table
 from rich.progress import Progress, TextColumn, SpinnerColumn
 
 console = Console()
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename="object_counter.log", level=logging.INFO)
 tableRecords = Table("UDDI", "NIOS", "Type", "Missing", title="UDDI/NIOS Object Count")
 wapi = Gift()
 
@@ -65,6 +68,7 @@ def connect_uddi(config):
             f"[bright_green]BloxOne[/] [white]Platform[/]: [bright white]{customer}[/bright white]"
         )
         console.print("[bright_green]Connected to BloxOne[/]")
+        logger.info(f"Connected to UDDI Tenant: {customer}")
     return b1
 
 
@@ -77,9 +81,11 @@ def connect_nios(grid_mgr, username, wapi_ver):
         wapi.connect(username=username, password=password)
     except WapiRequestException as err:
         console.print(f"Error:[red] {err}[/red]")
+        logger.error(f"Unable to connect to NIOS grid: {err}")
         sys.exit(1)
     else:
         print(f"Connected to Infoblox grid manager {wapi.grid_mgr}")
+        logger.info(f"Connected to NIOS grid: {wapi.grid_mgr}")
     return wapi
 
 
@@ -105,7 +111,9 @@ def collect_uddi_record_count(b1, uddi):
                         f"UDDI rate limit exceeded after "
                         f"5 attempts: {response.text}"
                     )
+                    logger.critical(f"{uddi} rate limit exceeded: {response.text}")
 
+                logger.critical(f"{uddi} rate limited: {response.text}")
                 retry_after = response.headers.get("Retry-After")
 
                 if retry_after and retry_after.isdigit():
@@ -161,7 +169,7 @@ def collect_uddi_record_count(b1, uddi):
 def collect_nios_record_count(wapi, nios, b1, verify, threads):
     nios_count = wapi.get(nios, params={"_max_results": 100000, "_return_as_object": 1})
     if nios_count.status_code != 200:
-        print(f"NIOS Error: {nios_count.status_code} : {nios_count.text}")
+        logger.critical(f"NIOS Error: {nios_count.status_code} : {nios_count.text}")
         return 0
 
     # Extract results array safely
@@ -186,7 +194,9 @@ def verify_nios_uddi(b1, hostname, type):
                 "/dns/record", _filter=f"dns_absolute_name_spec=='{hostname}.'"
             )
         if record_verify.status_code != 200:
-            print(f"{hostname}: {record_verify.status_code} : {record_verify.text}")
+            logger.critical(
+                f"{hostname} verification: {record_verify.status_code} : {record_verify.text}"
+            )
             return False, []
 
         results = record_verify.json().get("results", [])
@@ -198,7 +208,7 @@ def verify_nios_uddi(b1, hostname, type):
             return True, records_metadata
         return False, []
     except Exception as e:
-        print(f"Error verifying {hostname}: {e}")
+        logger.critical(f"Error verifying {hostname}: {e}")
         return False, []
 
 
@@ -318,7 +328,6 @@ def main(
     for uddi, nios in zip(uddi_record_types, nios_record_types):
         uddi_count = collect_uddi_record_count(b1, uddi)
         nios_count = collect_nios_record_count(wapi, nios, b1, verify, threads)
-        # print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
         totalTable.add_row(nios, str(uddi_count), str(nios_count))
     console.print(totalTable)
     console.print(tableRecords)
