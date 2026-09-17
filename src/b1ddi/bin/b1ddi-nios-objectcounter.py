@@ -314,12 +314,12 @@ def main(
     """Compare Record Object Counts between BloxOne DDI and NIOS\nVerify NIOS records in UDDI and display missing records"""
     b1 = connect_uddi(config)
     wapi = connect_nios(grid_mgr, username, wapi_ver)
-    totalTable = Table("UDDI", "NIOS", title="Total Object Count")
+    totalTable = Table("Type", "UDDI", "NIOS", title="Total Object Count")
     for uddi, nios in zip(uddi_record_types, nios_record_types):
         uddi_count = collect_uddi_record_count(b1, uddi)
         nios_count = collect_nios_record_count(wapi, nios, b1, verify, threads)
         # print(f"{uddi} : BloxOne DDI Count: {uddi_count} NIOS Count: {nios_count}")
-        totalTable.add_row(str(uddi_count), str(nios_count))
+        totalTable.add_row(nios, str(uddi_count), str(nios_count))
     console.print(totalTable)
     console.print(tableRecords)
 
