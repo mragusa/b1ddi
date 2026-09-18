@@ -83,29 +83,35 @@ def process_file(b1, file, update, dryrun, config):
                             subnet_ha_groups[net[1]] = "None"
                 # Check if new instance assignment is different
                 subnet = b1.get("/ipam/subnet", id=sub_id)
-                if (
-                    subnet.json().get("result").get("dhcp_host")
-                    != subnet_ha_groups[net[1]]
-                ):
-                    print(f"Network: {net[0]} Subnet ID: {sub_id}")
-                    print(f"HA Group: {net[1]} HA ID: {subnet_ha_groups[net[1]]}")
-                    if update:
-                        update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
-                    if dryrun:
-                        print(
-                            f"Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
-                        )
-                    if ran_id:
-                        print(f"Range ID: {ran_id}")
-                        if update:
-                            update_range(b1, ran_id, subnet_ha_groups[net[1]])
-                        if dryrun:
-                            print(
-                                f"Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
-                            )
+                if subnet.status_code != 200:
+                    print(
+                        f"Error: problem retreiving {net[0]}: {subnet.status_code} : {subnet.text}"
+                    )
                 else:
-                    print(f"{net[0]} does not need update")
-                print()
+                    if subnet.json().get("result") is not None:
+                        if (
+                            subnet.json().get("result").get("dhcp_host")
+                            != subnet_ha_groups[net[1]]
+                        ):
+                            if update:
+                                update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
+                            if dryrun:
+                                print(
+                                    f"Subnet: Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
+                                )
+                            if ran_id:
+                                if update:
+                                    update_range(b1, ran_id, subnet_ha_groups[net[1]])
+                                if dryrun:
+                                    print(
+                                        f"Range: Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
+                                    )
+                            else:
+                                print(f"Info: DHCP Range not configured for {net[0]}")
+                        else:
+                            print(f"Info: {net[0]} does not need an update")
+                    else:
+                        print(f"Problem: {net[0]} does not exist. Check UDDI Portal")
     else:
         print("CSV Input File Missing")
 
