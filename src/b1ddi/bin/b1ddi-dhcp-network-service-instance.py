@@ -17,7 +17,7 @@ def get_subnet(b1):
     if b1_subnet.status_code != 200:
         print(b1_subnet.status_code, b1_subnet.text)
     else:
-        subnets = b1_subnet.json()
+        subnets = b1_subnet.json().get("results")
         subTable = Table(
             title="Current Subnet and Range Service Assignment", row_styles=["dim", ""]
         )
@@ -27,7 +27,7 @@ def get_subnet(b1):
         subTable.add_column(
             "Range Service Instance", justify="center", style="bright_white"
         )
-        for net in subnets["results"]:
+        for net in subnets:
             dhcp_range = get_range(b1, net["id"])
             if net["dhcp_host"] not in service_instance:
                 srv_id = net["dhcp_host"].split("/")[-1]
@@ -76,7 +76,7 @@ def process_file(b1, file, update, dryrun):
                     if ha_id:
                         subnet_ha_groups[net[1]] = ha_id
                     else:
-                        # Check if service instance
+                        # Check if DHCP service instance
                         service_instance_id = get_service_id(b1, net[1])
                         if service_instance_id:
                             subnet_ha_groups[net[1]] = service_instance_id
@@ -85,9 +85,7 @@ def process_file(b1, file, update, dryrun):
                 # Check if new instance assignment is different
                 subnet = b1.get("/ipam/subnet", id=sub_id)
                 if subnet.status_code != 200:
-                    print(
-                        f"Error: problem retreiving {net[0]}: {subnet.status_code} : {subnet.text}"
-                    )
+                    print(f"Error: {net[0]}: {subnet.status_code} : {subnet.text}")
                 else:
                     if subnet.json().get("result") is not None:
                         if (
@@ -95,17 +93,19 @@ def process_file(b1, file, update, dryrun):
                             != subnet_ha_groups[net[1]]
                         ):
                             if update:
-                                update_subnet(b1, sub_id, subnet_ha_groups[net[1]])
+                                update_subnet(
+                                    b1, net[0], sub_id, subnet_ha_groups[net[1]]
+                                )
                             if dryrun:
                                 print(
-                                    f"Subnet: Updating {net[0]} {subnet_ha_groups[net[1]]} in dryrun mode"
+                                    f"Dry Run Update: {net[0]} : {subnet_ha_groups[net[1]]}"
                                 )
                             if ran_id:
                                 if update:
                                     update_range(b1, ran_id, subnet_ha_groups[net[1]])
                                 if dryrun:
                                     print(
-                                        f"Range: Updating {net[0]} {ran_id} {subnet_ha_groups[net[1]]} in dryrun mode"
+                                        f"Dry Run Update: {net[0]} : Range {ran_id} : {subnet_ha_groups[net[1]]}"
                                     )
                             else:
                                 print(f"Info: DHCP Range not configured for {net[0]}")
@@ -148,7 +148,7 @@ def get_ha_id(b1, ha_group):
 
 def get_service_id(b1, service_name):
     # DHCP Service instances come from /dhcp/host
-    # Do not use infra /services url. reports back different IDs
+    # Do not use infra /services url. reports back service IDs
     service_id = b1.get_id(
         "/dhcp/host",
         key="name",
@@ -158,26 +158,29 @@ def get_service_id(b1, service_name):
     return service_id
 
 
-def update_subnet(b1, subnet_id, ha_group_id):
-    print("Updating Subnet {}".format(subnet_id))
-    updateBody = {"dhcp_host": ha_group_id}
-    updated_subnet = b1.replace(
-        "/ipam/subnet", id=subnet_id, body=json.dumps(updateBody)
-    )
-    if updated_subnet.status_code != 200:
-        print(updated_subnet.status_code, updated_subnet.text)
+def update_subnet(b1, subnet, subnet_id, ha_group_id):
+    if ha_group_id is None:
+        print("{subnet}: service instance not found. Review Assignment")
     else:
-        print("Subnet Updated: {} {}".format(subnet_id, ha_group_id))
+        print(f"Updating {subnet} : {subnet_id}")
+        updateBody = {"dhcp_host": ha_group_id}
+        updated_subnet = b1.replace(
+            "/ipam/subnet", id=subnet_id, body=json.dumps(updateBody)
+        )
+        if updated_subnet.status_code != 200:
+            print(updated_subnet.status_code, updated_subnet.text)
+        else:
+            print(f"{subnet} Updated: {subnet_id} {ha_group_id}")
 
 
 def update_range(b1, range_id, ha_group_id):
-    print("Updating Range {}".format(range_id))
+    print(f"Updating Range {range_id}")
     updateBody = {"dhcp_host": ha_group_id}
     updated_range = b1.replace("/ipam/range", id=range_id, body=json.dumps(updateBody))
     if updated_range.status_code != 200:
         print(updated_range.status_code, updated_range.text)
     else:
-        print("Range Updated: {} {}".format(range_id, ha_group_id))
+        print(f"{range_id} Updated : {ha_group_id}")
 
 
 @click.command()
@@ -217,7 +220,7 @@ def main(config: str, get: bool, file: str, update: bool, dryrun: bool):
     if get:
         get_subnet(b1)
     if update or dryrun:
-        process_file(b1, file, update, dryrun, config)
+        process_file(b1, file, update, dryrun)
 
 
 if __name__ == "__main__":
