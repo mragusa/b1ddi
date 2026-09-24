@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# TODO clean up
 
 import bloxone
 import csv
@@ -57,7 +58,7 @@ def get_range(b1, parent):
         return None
 
 
-def process_file(b1, file, update, dryrun, config):
+def process_file(b1, file, update, dryrun):
     # TODO Create function for this giant mess
     # TODO Clean up output
     subnet_ha_groups = {}
@@ -76,7 +77,7 @@ def process_file(b1, file, update, dryrun, config):
                         subnet_ha_groups[net[1]] = ha_id
                     else:
                         # Check if service instance
-                        service_instance_id = get_service_id(config, net[1])
+                        service_instance_id = get_service_id(b1, net[1])
                         if service_instance_id:
                             subnet_ha_groups[net[1]] = service_instance_id
                         else:
@@ -145,10 +146,14 @@ def get_ha_id(b1, ha_group):
     return ha_id
 
 
-def get_service_id(config, service_name):
-    b1 = bloxone.b1infra(config)
+def get_service_id(b1, service_name):
+    # DHCP Service instances come from /dhcp/host
+    # Do not use infra /services url. reports back different IDs
     service_id = b1.get_id(
-        "/services", key="name", value=service_name, include_path=True
+        "/dhcp/host",
+        key="name",
+        value=service_name,
+        include_path=True,
     )
     return service_id
 
