@@ -4,21 +4,11 @@
 
 import bloxone
 import click
+import json
 from rich.console import Console
 from rich.table import Table
 
-
-@click.command()
-@click.option(
-    "-c", "--config", default="~/b1ddi/b1config.ini", help="BloxOne DDI Config File"
-)
-@click.option(
-    "-g", "--get", is_flag=True, default=False, help="Retrieve ACL Information"
-)
-def main(config: str, get: bool):
-    b1 = bloxone.b1ddi(config)
-    if get:
-        get_acl(b1)
+console = Console()
 
 
 def get_acl(b1):
@@ -44,8 +34,56 @@ def get_acl(b1):
                     y["element"],
                     y["tsig_key"],
                 )
-            console = Console()
             console.print(table)
+
+
+def add_acl(b1, name, aclList):
+    aclBody = {"name": name, "list": aclList}
+    b1_acl = b1.create("/dns/acl", body=json.dumps(aclBody))
+    if b1_acl.status_code != 200:
+        print(b1_acl.status_code, b1_acl.text)
+    else:
+        get_acl(b1)
+
+
+@click.command()
+@click.option(
+    "-c", "--config", default="~/b1ddi/b1config.ini", help="BloxOne DDI Config File"
+)
+@click.option(
+    "-g", "--get", is_flag=True, default=False, help="Get Named ACL Information"
+)
+@click.option("-a", "--add", is_flag=True, default=False, help="Add Named ACL")
+@click.option(
+    "-n", "--name", default="Internal", show_default=False, help="NamedACL Name"
+)
+@click.option(
+    "--address",
+    default=["10.0.0.1"],
+    multiple=True,
+    show_default=True,
+    help="NamedACL Address element",
+)
+@click.option("--acl", help="Infoblox ACL String")
+@click.option("--action", default="allow", show_default=True, help="ACL access action")
+def main(
+    config: str, get: bool, add: bool, name: str, address: list, acl: str, action: str
+):
+    aclList = []
+    if address:
+        for a in address:
+            aclList.append({"address": {a}, "element": "ip", "access": {action}})
+    if acl:
+        acl_list = acl.split(",")
+        for a in acl_list:
+            access = a.split("/")
+            aclList.append({"address": access[0], "element": "ip", "access": access[1]})
+    b1 = bloxone.b1ddi(config)
+    if get:
+        get_acl(b1)
+    if add:
+        print(aclList)
+        # add_acl(b1, name, aclList)
 
 
 if __name__ == "__main__":
