@@ -48,10 +48,9 @@ def get_authzone(b1):
 
 
 def create_authzone(b1, fqdn):
-    # TODO
-    # Add support for NSG
-    # Add support for external primaries
-    # Change primary_type to choice arg
+    # TODO:Add support for NSG
+    # TODO:Add support for external primaries
+    # TODO:Change primary_type to choice arg
     auth_zone_body = {"fqdn": fqdn, "primary_type": "cloud"}
     b1_authzone = b1.create("/dns/auth_zone", body=auth_zone_body)
     if b1_authzone.status_code != 201:

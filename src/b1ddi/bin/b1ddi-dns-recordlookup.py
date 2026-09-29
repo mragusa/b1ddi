@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# TODO
-# Fix tables to display all information returned by BloxOne
+# TODO:Fix tables to display all information returned by BloxOne
 
 import bloxone
 import click

@@ -8,10 +8,8 @@ from rich.table import Table
 import click
 from click_option_group import optgroup
 
-
-# TODO
-# Add functionality for additional options for niosx hosts
-# Add functionality for providing tsig keys
+# TODO:Add functionality for additional options for niosx hosts
+# TODO:Add functionality for providing tsig keys
 
 
 @click.command()

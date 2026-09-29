@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# TODO
-# Add ability to delete ACL and update ACL
+# TODO:Add ability to delete ACL and update ACL
+# TODO:Update help menu
 
 import bloxone
 import click

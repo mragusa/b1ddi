@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# TODO clean up
+# TODO:clean up
 
 import bloxone
 import csv
@@ -59,8 +59,8 @@ def get_range(b1, parent):
 
 
 def process_file(b1, file, update, dryrun):
-    # TODO Create function for this giant mess
-    # TODO Clean up output
+    # FIX:Create function for this giant mess
+    # TODO:Clean up output
     subnet_ha_groups = {}
     if file:
         with open(file, newline="\n") as csvfile:
@@ -147,8 +147,8 @@ def get_ha_id(b1, ha_group):
 
 
 def get_service_id(b1, service_name):
-    # DHCP Service instances come from /dhcp/host
-    # Do not use infra /services url. reports back service IDs
+    # WARN:DHCP Service instances come from /dhcp/host
+    # WARN:Do not use infra /services url. reports back service IDs
     service_id = b1.get_id(
         "/dhcp/host",
         key="name",

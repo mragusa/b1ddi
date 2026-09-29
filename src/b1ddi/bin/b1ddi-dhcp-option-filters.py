@@ -9,8 +9,7 @@ from click_option_group import optgroup
 from rich.console import Console
 from rich.table import Table
 
-# TODO
-# More effective way to look up DHCP Codes
+# TODO:More effective way to look up DHCP Codes
 
 
 @click.command()

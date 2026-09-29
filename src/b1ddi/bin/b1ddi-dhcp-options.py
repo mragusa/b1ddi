@@ -8,8 +8,7 @@ from click_option_group import optgroup
 from rich.console import Console
 from rich.table import Table
 
-# TODO
-# Add Delete Functionality
+# TODO:Add Delete Functionality
 
 
 @click.command()

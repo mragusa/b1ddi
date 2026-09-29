@@ -7,8 +7,7 @@ from click_option_group import optgroup
 from rich.console import Console
 from rich.table import Table
 
-# TODO
-# Add code to save join token to file
+# TODO:Add code to save join token to file
 
 
 @click.command()

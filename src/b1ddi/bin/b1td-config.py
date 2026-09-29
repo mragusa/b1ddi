@@ -4,10 +4,10 @@ import bloxone
 import click
 from prettytable import PrettyTable
 
-# TODO Add Table for access_codes, app_approvals, block_approvals, category_filters, network_lists,
-# TODO clean up format_response function
-# TODO change pretty table to rich table
-# FIX adjust table for security_policies to allow rule content to print properly
+# TODO:Add Table for access_codes, app_approvals, block_approvals, category_filters, network_lists,
+# TODO:clean up format_response function
+# TODO:change pretty table to rich table
+# FIX:adjust table for security_policies to allow rule content to print properly
 
 
 def format_response(get_object, response):

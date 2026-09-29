@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-# TODO
-# Change PrettyTable for RichTables
-# Fix file functions to resolve possibly unbound errors
-# Rewrite file section to use functions
-# Resolve password undefined in mail function
-# assign type in main()
+# TODO:Change PrettyTable for RichTables
+# FIX:file functions to resolve possibly unbound errors
+# TODO:Rewrite file section to use functions
+# TODO:Resolve password undefined in mail function
+# TODO:Assign type in main()
 import csv
 import bloxone
 from prettytable import PrettyTable

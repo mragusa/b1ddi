@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# TODO Clean up display output
+# TODO:Clean up display output
 
 import bloxone
 import logging
@@ -7,6 +7,7 @@ import json
 import csv
 import click
 from click_option_group import optgroup
+
 # Uncomment to enable debug logging
 # logging.basicConfig(level=logging.DEBUG)
 

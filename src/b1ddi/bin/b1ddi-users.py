@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# TODO finish create user function and testing.
-# TODO add user auditing
-# TODO add delete user function
+# TODO:finish create user function and testing.
+# TODO:add user auditing
+# TODO:add delete user function
 
 import bloxone
 import click

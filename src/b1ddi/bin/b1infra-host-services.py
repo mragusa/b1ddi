@@ -7,9 +7,8 @@ from click_option_group import optgroup
 from rich.console import Console
 from rich.table import Table
 
-# TODO
-# Add ability to delete hosts
-# Add ability to delete services
+# TODO:Add ability to delete hosts
+# TODO:Add ability to delete services
 
 
 def get_b1_hosts(b1infra):
