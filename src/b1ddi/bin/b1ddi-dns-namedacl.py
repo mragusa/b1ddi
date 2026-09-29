@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TODO
-# Add ability to create ACL, delete ACL and update ACL
+# Add ability to delete ACL and update ACL
 
 import bloxone
 import click
@@ -59,31 +59,33 @@ def add_acl(b1, name, aclList):
 )
 @click.option(
     "--address",
-    default=["10.0.0.1"],
+    # default=["10.0.0.1 allow"],
+    type=(str, str),
     multiple=True,
     show_default=True,
     help="NamedACL Address element",
 )
 @click.option("--acl", help="Infoblox ACL String")
-@click.option("--action", default="allow", show_default=True, help="ACL access action")
-def main(
-    config: str, get: bool, add: bool, name: str, address: list, acl: str, action: str
-):
+def main(config: str, get: bool, add: bool, name: str, address: list, acl: str):
     aclList = []
     if address:
-        for a in address:
-            aclList.append({"address": {a}, "element": "ip", "access": {action}})
+        ip_access = dict(address)
+        if ip_access:
+            for a in ip_access:
+                print(a, ip_access[a])
+                aclList.append({"address": a, "element": "ip", "access": ip_access[a]})
     if acl:
         acl_list = acl.split(",")
         for a in acl_list:
             access = a.split("/")
-            aclList.append({"address": access[0], "element": "ip", "access": access[1]})
+            aclList.append(
+                {"address": access[0], "element": "ip", "access": access[1].lower()}
+            )
     b1 = bloxone.b1ddi(config)
     if get:
         get_acl(b1)
     if add:
-        print(aclList)
-        # add_acl(b1, name, aclList)
+        add_acl(b1, name, aclList)
 
 
 if __name__ == "__main__":
