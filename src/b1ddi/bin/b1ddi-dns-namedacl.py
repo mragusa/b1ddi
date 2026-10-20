@@ -59,10 +59,8 @@ def add_acl(b1, name, aclList):
 )
 @click.option(
     "--address",
-    # default=["10.0.0.1 allow"],
     type=(str, str),
     multiple=True,
-    show_default=True,
     help="NamedACL Address element",
 )
 @click.option("--acl", help="Infoblox ACL String")
@@ -72,7 +70,6 @@ def main(config: str, get: bool, add: bool, name: str, address: list, acl: str):
         ip_access = dict(address)
         if ip_access:
             for a in ip_access:
-                print(a, ip_access[a])
                 aclList.append({"address": a, "element": "ip", "access": ip_access[a]})
     if acl:
         acl_list = acl.split(",")
